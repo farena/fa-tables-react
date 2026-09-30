@@ -222,32 +222,31 @@ export default function FaTableActions({
               ref={dropdownRef}
             >
               <ul>
-                {actions?.map((action, actionIndex) =>
-                  !action.hideWhenFn || !action.hideWhenFn(item) ? (
-                    <li key={actionIndex}>
-                      {action.to ? (
-                        <a href={action.to(item)}>
-                          <small>{action.title}</small>
-                        </a>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            actionClicked(action);
-                          }}
-                          onAuxClick={(e) => {
-                            if (e.button !== 1) return;
-                            e.stopPropagation();
-                            actionClicked(action, true);
-                          }}
-                        >
-                          <small>{action.title}</small>
-                        </button>
-                      )}
-                    </li>
-                  ) : (
-                    ""
-                  ),
+                {actions?.map(
+                  (action, actionIndex) =>
+                    (!action.hideWhenFn || !action.hideWhenFn(item)) && (
+                      <li key={actionIndex}>
+                        {action.to ? (
+                          <a href={action.to(item)}>
+                            <small>{action.title}</small>
+                          </a>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              actionClicked(action);
+                            }}
+                            onAuxClick={(e) => {
+                              if (e.button !== 1) return;
+                              e.stopPropagation();
+                              actionClicked(action, true);
+                            }}
+                          >
+                            <small>{action.title}</small>
+                          </button>
+                        )}
+                      </li>
+                    ),
                 )}
               </ul>
             </div>,

@@ -14,6 +14,9 @@ export interface FaTableLang {
       hiddenColumns: string;
       clearAll: string;
       applyFilters: string;
+      allOption: string;
+      yes: string;
+      no: string;
     };
   };
   pager: {
@@ -43,6 +46,7 @@ export interface FaTableHeader {
   pre?: string;
   after?: string;
   sortable?: boolean;
+  sort_value?: string;
   hideable?: boolean;
   callback?: (item: unknown) => string;
   slot?: string;
@@ -55,25 +59,55 @@ export interface FaTableAction {
   to?: (item: unknown) => string;
 }
 
+export type FaTableFilterType =
+  | "select"
+  | "select-multiple"
+  | "combobox"
+  | "date"
+  | "date-range"
+  | "number"
+  | "boolean";
+
+export type FaTableFilterSectionValueType =
+  | undefined
+  | string
+  | string[]
+  | number
+  | Array<unknown>
+  | Record<string, unknown>;
+
+export type FaTableFilterOptionObjValue = {
+  value: string | number | Record<string, unknown>;
+  label: string;
+};
+
+export interface FaTableFilterSectionLang {
+  yes: string;
+  no: string;
+}
+
+export interface FaTableFilterSectionProps {
+  label: string;
+  value: FaTableFilterSectionValueType;
+  sectionType: FaTableFilterType;
+  column: string;
+  options?: Array<string | FaTableFilterOptionObjValue>;
+  moduleName?: string;
+  allOption?: string | boolean;
+  /** Labels used by the boolean section options. */
+  lang?: FaTableFilterSectionLang;
+  onChange: (val: FaTableFilterSectionValueType) => void;
+}
+
 export interface FaTableFilter {
   title: string;
-  type:
-    | "select"
-    | "select-multiple"
-    | "combobox"
-    | "date"
-    | "date-range"
-    | "number"
-    | "boolean";
+  type: FaTableFilterType;
   column: string;
-  options?: Array<{ label: string; value: unknown }> | null;
-  module?: string | null;
-  all_option?: string | null;
+  options?: Array<string | FaTableFilterOptionObjValue>;
+  all_option?: string | boolean | null;
   default_value?: unknown;
   /** Key used to extract the value when the filter's result is an object or array of objects. */
   primary_key?: string | null;
-  // Column to depend on (only for select/select-multiple with module)
-  dependsOn?: string | null;
 }
 
 export interface FaTablePagerOpts {

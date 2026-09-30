@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import FaTable from "./components/FaTable";
-import type { FaTableFilter, FaTablePagerParams } from "./types/FaTableTypes";
+import type {
+  FaTableAction,
+  FaTableFilter,
+  FaTableHeader,
+  FaTablePagerParams,
+} from "./types/FaTableTypes";
 
 interface Role {
   name: string;
@@ -42,20 +47,23 @@ const callbacks = {
   },
 };
 
-const tableHeaders = [
+const tableHeaders: Array<FaTableHeader> = [
   {
     title: "name",
     sortable: true,
+    hideable: true,
   },
   {
     title: "birth_date",
     mask: "birth date",
     dateFormat: true,
     sortable: true,
+    hideable: true,
   },
   {
     title: "username",
     sortable: true,
+    hideable: true,
   },
   {
     title: "age",
@@ -71,7 +79,7 @@ const tableHeaders = [
   },
 ];
 
-const tableActions = [
+const tableActions: Array<FaTableAction> = [
   {
     title: "Show Details",
     callback: callbacks.onShowDetails,
@@ -96,6 +104,52 @@ const tableFilters: Array<FaTableFilter> = [
     type: "select",
     column: "role",
     default_value: "admin",
+    options: [
+      { label: "Admin", value: "admin" },
+      { label: "Editor", value: "editor" },
+      { label: "Viewer", value: "viewer" },
+    ],
+    all_option: true,
+  },
+  {
+    title: "Roles",
+    type: "select-multiple",
+    column: "roles",
+    options: [
+      { label: "Admin", value: "admin" },
+      { label: "Editor", value: "editor" },
+      { label: "Viewer", value: "viewer" },
+    ],
+  },
+  {
+    title: "Name",
+    type: "combobox",
+    column: "name",
+    options: [
+      { label: "John Doe", value: 1 },
+      { label: "Jane Smith", value: 2 },
+      { label: "Peter Parker", value: 3 },
+    ],
+  },
+  {
+    title: "Birth date",
+    type: "date",
+    column: "birth_date",
+  },
+  {
+    title: "Created between",
+    type: "date-range",
+    column: "created_at",
+  },
+  {
+    title: "Age",
+    type: "number",
+    column: "age",
+  },
+  {
+    title: "Validated",
+    type: "boolean",
+    column: "validated",
   },
 ];
 

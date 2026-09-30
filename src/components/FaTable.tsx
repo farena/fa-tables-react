@@ -28,6 +28,9 @@ const defaultLang: FaTableLang = {
       hiddenColumns: "Hidden Columns",
       clearAll: "Clear All",
       applyFilters: "Apply filters",
+      allOption: "All",
+      yes: "Yes",
+      no: "No",
     },
   },
   pager: {
@@ -253,7 +256,7 @@ export default function FaTable({
 
   return (
     <>
-      <div className="v-table">
+      <div className="fa-table">
         {!noFilters && (
           <FaTableFilters
             searchable={searchable}
@@ -269,7 +272,7 @@ export default function FaTable({
           />
         )}
 
-        <div className="v-table-container">
+        <div className="fa-table-container">
           <table className="table">
             <thead>
               <tr>
@@ -297,8 +300,8 @@ export default function FaTable({
                     colSpan={visibleHeaders.length + 1}
                     style={{ textAlign: "center" }}
                   >
-                    <div className="vt-loader-wrapper">
-                      <div className="vt-loader"></div>
+                    <div className="fa-table-loader-wrapper">
+                      <div className="fa-table-loader"></div>
                     </div>
                   </td>
                 </tr>
@@ -331,7 +334,7 @@ export default function FaTable({
 
                   {/* actions */}
                   {actions?.length && (
-                    <td className="vt-actions-cell" style={{ width: 1 }}>
+                    <td className="fa-table-actions-cell" style={{ width: 1 }}>
                       <FaTableActions item={item} actions={actions} />
                     </td>
                   )}

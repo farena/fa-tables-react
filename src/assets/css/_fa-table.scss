@@ -28,14 +28,14 @@
   }
 }
 
-.v-table {
+.fa-table {
   display: grid;
   gap: 1em;
   overflow: hidden;
   background: var(--fa-tables-bg);
   color: var(--fa-tables-text);
 
-  .v-table-container {
+  .fa-table-container {
     overflow-x: auto;
     overflow-y: hidden;
   }
@@ -61,7 +61,7 @@
       vertical-align: middle !important;
     }
 
-    tr.v-table-row-clickeable {
+    tr.fa-table-row-clickeable {
       cursor: pointer;
     }
     tr.data-inactive td:not(:last-child) {
@@ -79,18 +79,18 @@
       padding: 0;
       display: none;
     }
-    .v-table-input-container,
-    .v-table-input-container .v-table-input {
+    .fa-table-input-container,
+    .fa-table-input-container .fa-table-input {
       margin: 0;
       width: 100%;
       height: 100%;
       border: unset;
     }
-    .v-table-input-container .v-table-input[type="checkbox"] {
+    .fa-table-input-container .fa-table-input[type="checkbox"] {
       width: auto;
       height: unset;
     }
-    td.v-table-just-button {
+    td.fa-table-just-button {
       padding: 0 !important;
     }
     .btn.btn-sm {
@@ -105,7 +105,7 @@
       padding-top: 20px !important;
     }
 
-    .vt-actions-cell {
+    .fa-table-actions-cell {
       padding: 0 !important;
 
       button {
@@ -121,11 +121,11 @@
       }
     }
 
-    .vt-loader-wrapper {
+    .fa-table-loader-wrapper {
       display: grid;
       place-items: center;
     }
-    .vt-loader {
+    .fa-table-loader {
       width: 45px;
       aspect-ratio: 1;
       --c: no-repeat linear-gradient(var(--fa-tables-text) 0 0);
@@ -211,7 +211,7 @@
         }
       }
 
-      .vt-actions-cell {
+      .fa-table-actions-cell {
         grid-template-columns: 1fr;
         &::before {
           content: unset;
@@ -239,7 +239,7 @@
   }
 }
 
-.v-table-filters {
+.fa-table-filters {
   display: grid;
   grid-template-columns: 1fr;
   grid-template-areas:
@@ -252,7 +252,7 @@
     grid-template-areas: "search . filters";
   }
 
-  .vt-search {
+  .fa-table-search {
     grid-area: search;
     display: flex;
     align-items: center;
@@ -287,17 +287,17 @@
       }
     }
   }
-  .vt-filters {
+  .fa-table-filters-controls {
     grid-area: filters;
     position: relative;
     z-index: 1;
 
-    .vt-filters-wrapper {
+    .fa-table-filters-wrapper {
       display: flex;
       gap: 0.5em;
       align-items: center;
 
-      .vt-clear-btn {
+      .fa-table-clear-btn {
         background: transparent;
         padding: 0;
         text-decoration: underline;
@@ -311,7 +311,7 @@
         }
       }
 
-      .vt-filters-btn {
+      .fa-table-filters-btn {
         display: inline-flex;
         align-items: center;
         gap: 0.4em;
@@ -331,7 +331,7 @@
           opacity: 0.85;
         }
 
-        .vt-badge {
+        .fa-table-badge {
           border-radius: var(--fa-tables-radius);
           padding: 0 0.5em;
           background: var(--fa-tables-badge-bg);
@@ -344,12 +344,12 @@
   }
 }
 
-.v-table-pager {
+.fa-table-pager {
   display: flex;
   flex-direction: column;
   gap: 1em;
 
-  .vt-results {
+  .fa-table-results {
     font-size: 0.8em;
     text-align: center;
     color: var(--fa-tables-text);
@@ -381,14 +381,14 @@
         pointer-events: none;
       }
 
-      &.vt-number {
+      &.fa-table-number {
         aspect-ratio: 1;
         display: grid;
         place-items: center;
       }
     }
 
-    .vt-mobile {
+    .fa-table-mobile {
       display: none;
 
       @media (max-width: 767px) {
@@ -396,7 +396,7 @@
         place-items: center;
       }
     }
-    .vt-desktop {
+    .fa-table-desktop {
       display: grid;
       place-items: center;
 
@@ -413,95 +413,186 @@
   }
 }
 
-.vue-modal.vt-filters-modal {
-  .modal-footer {
-    justify-content: space-between !important;
+.fa-table-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(0, 0, 0, 0);
+  color: var(--fa-tables-text);
+  transition: background-color 0.3s ease-out;
 
-    a {
-      white-space: nowrap;
-    }
-    button {
-      margin-left: auto;
-    }
+  &--open {
+    background: rgba(0, 0, 0, 0.5);
   }
-  .modal-title {
+
+  .fa-table-modal-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
-    align-items: center;
-    gap: 0.75em;
+    flex-direction: column;
+    width: 100%;
+    max-width: 500px;
+    background: var(--fa-tables-bg);
+    border-left: 1px solid var(--fa-tables-border);
+    box-shadow: var(--fa-tables-shadow);
+    overflow: hidden;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-out;
+
+    &--open {
+      transform: translateX(0);
+      transition-delay: 0.4s;
+    }
   }
 
-  .filters-section {
-    &:not(:last-of-type) {
-      border-bottom: 1px solid rgba(0, 0, 0, 0.25);
-    }
+  .fa-table-content {
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75em;
+      padding: 0.75em 1em;
+      border-bottom: 1px solid var(--fa-tables-border);
 
-    .form-container {
-      margin: 0.25em 0;
-
-      select {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-
-        option {
-          padding: 0.5em;
-        }
-      }
-    }
-
-    &.collapse {
-      .filters-section-head {
-        display: grid;
-        grid-template-columns: 1fr 40px;
+      &-title {
+        display: flex;
         align-items: center;
-        height: 42px;
-        margin: 0.25em 0;
+        gap: 0.75em;
+        margin: 0;
+        font-size: 1.1em;
+      }
+
+      &-closebtn {
+        display: grid;
+        place-items: center;
+        padding: 0 0.25em;
+        border: none;
+        border-radius: var(--fa-tables-radius);
+        background: transparent;
+        color: inherit;
+        font-size: 1.5em;
+        line-height: 1;
         cursor: pointer;
 
-        h6 {
-          font-size: 0.9em;
-          margin: 0;
-        }
-
-        .icon {
-          display: grid;
-          place-items: center;
-          transform: rotate(180deg);
-          transition: 0.25s ease-in-out;
+        &:hover {
+          background: var(--fa-tables-bghover);
         }
       }
-      .filters-section-body {
-        display: grid;
-        grid-template-rows: 1fr;
-        transition: 0.5s ease-in-out;
-        padding-bottom: 01em;
+    }
 
-        > div {
-          overflow: hidden;
-        }
+    &__body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0 1em;
+    }
 
-        .form-container {
-          margin: 0;
-        }
+    &__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75em;
+      padding: 0.75em 1em;
+      border-top: 1px solid var(--fa-tables-border);
 
-        .filters-type {
-          &-select-multiple {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-          }
-        }
+      a {
+        white-space: nowrap;
+        color: var(--fa-tables-text);
+        font-size: 0.8em;
+        cursor: pointer;
+      }
+      button {
+        margin-left: auto;
+        padding: 0.4em 1em;
+        border: none;
+        border-radius: var(--fa-tables-radius);
+        background: var(--fa-tables-filters-btn-bg);
+        color: var(--fa-tables-filters-btn-text);
+        cursor: pointer;
       }
 
-      &.collapsed {
-        .filters-section-body {
-          grid-template-rows: 0fr;
-          padding-bottom: 0;
-        }
-
-        .icon {
-          transform: rotate(0);
+      a,
+      button {
+        &:hover {
+          opacity: 0.7;
         }
       }
+    }
+  }
+
+  .fa-table-filter-section {
+    padding: 0.5em 0;
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35em;
+    }
+
+    label {
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+
+    select,
+    input {
+      width: 100%;
+      min-height: 2.25em;
+      padding: 0.35em 0.6em;
+      box-sizing: border-box;
+      background-color: var(--fa-tables-bg);
+      color: var(--fa-tables-text);
+      border: 1px solid var(--fa-tables-border);
+      border-radius: var(--fa-tables-radius);
+      font: inherit;
+      font-size: 0.9em;
+      color-scheme: light dark;
+      transition: border-color 0.2s ease;
+
+      &:hover {
+        border-color: var(--fa-tables-text);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: var(--fa-tables-accent);
+        box-shadow: 0 0 0 1px var(--fa-tables-accent);
+      }
+    }
+
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      padding-right: 2em;
+      cursor: pointer;
+      // Chevron drawn with gradients so it follows the theme color
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--fa-tables-text) 50%),
+        linear-gradient(135deg, var(--fa-tables-text) 50%, transparent 50%);
+      background-position:
+        calc(100% - 1em) 50%,
+        calc(100% - 0.7em) 50%;
+      background-size: 0.3em 0.3em;
+      background-repeat: no-repeat;
+
+      &[multiple] {
+        padding-right: 0.6em;
+        background-image: none;
+      }
+
+      option {
+        padding: 0.5em;
+      }
+    }
+
+    .fa-table-section-date-range > div {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5em;
     }
   }
 }
@@ -644,7 +735,7 @@ table.table {
         }
       }
 
-      .vt-actions-cell {
+      .fa-table-actions-cell {
         grid-template-columns: 1fr;
         &::before {
           content: unset;
@@ -686,7 +777,7 @@ table.table {
   }
 }
 
-.vtable-btn {
+.fa-table-btn {
   text-wrap: nowrap;
   display: block;
   width: 100%;
@@ -716,8 +807,6 @@ table.table {
   }
 
   li {
-    padding: 0.25em 1em;
-    cursor: pointer;
     white-space: nowrap;
     min-width: 150px;
 
@@ -725,12 +814,20 @@ table.table {
       background: var(--fa-tables-bghover);
     }
 
-    button {
+    // The clickable element fills the whole row, not just its label
+    button,
+    a {
+      display: block;
+      width: 100%;
+      padding: 0.25em 1em;
       background: transparent;
       border: unset;
       box-shadow: unset;
       color: inherit;
-      padding: 0;
+      font: inherit;
+      text-align: left;
+      text-decoration: none;
+      cursor: pointer;
     }
   }
   .btn {

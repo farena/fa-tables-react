@@ -76,14 +76,14 @@ export default function FaTablePager({
   }
 
   return (
-    <div className="v-table-pager">
+    <div className="fa-table-pager">
       <div
-        className="vt-results"
+        className="fa-table-results"
         dangerouslySetInnerHTML={{ __html: formatShowingEntries() }}
       />
       <ul>
         <li
-          className={["vt-desktop", current_page - 1 === 0 ? "disabled" : ""]
+          className={["fa-table-desktop", current_page - 1 === 0 ? "disabled" : ""]
             .filter(Boolean)
             .join(" ")}
           onClick={(e) => {
@@ -97,8 +97,8 @@ export default function FaTablePager({
           <li
             key={page}
             className={[
-              "vt-desktop",
-              "vt-number",
+              "fa-table-desktop",
+              "fa-table-number",
               current_page === page ? "active disabled" : "",
             ]
               .filter(Boolean)
@@ -113,7 +113,7 @@ export default function FaTablePager({
         ))}
         <li
           className={[
-            "vt-desktop",
+            "fa-table-desktop",
             !last_page || current_page + 1 > last_page ? "disabled" : "",
           ]
             .filter(Boolean)
@@ -127,7 +127,7 @@ export default function FaTablePager({
         </li>
 
         <li
-          className={["vt-mobile", current_page - 1 === 0 ? "disabled" : ""]
+          className={["fa-table-mobile", current_page - 1 === 0 ? "disabled" : ""]
             .filter(Boolean)
             .join(" ")}
           onClick={(e) => {
@@ -139,7 +139,7 @@ export default function FaTablePager({
         </li>
         <li
           className={[
-            "vt-mobile",
+            "fa-table-mobile",
             current_page + 1 > last_page ? "disabled" : "",
           ]
             .filter(Boolean)

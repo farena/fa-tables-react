@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import type { FaTableFilter, FaTableHeader } from "../types/FaTableTypes";
+import type {
+  FaTableFilter,
+  FaTableFilterOptionObjValue,
+  FaTableFilterType,
+  FaTableHeader,
+} from "../types/FaTableTypes";
+import FaTableFiltersModal from "./FaTableFiltersModal";
+import { ucwords } from "../utils/ucwords";
 
 const defaultLang = {
   searchPlaceholder: "Search...",
@@ -14,14 +21,19 @@ const defaultLang = {
     hiddenColumns: "Hidden Columns",
     clearAll: "Clear All",
     applyFilters: "Apply filters",
+    allOption: "All",
+    yes: "Yes",
+    no: "No",
   },
 };
+
+const showOptions = ["10", "25", "50", "100", "200", "500", "1000"];
 
 /**
  * Returns a fresh map of default values per filter type, so object and
  * array defaults are never shared between filters or calls.
  */
-function getTypesDefaultValues() {
+function getTypesDefaultValues(): Record<FaTableFilterType, unknown> {
   return {
     number: null,
     select: null,
@@ -75,6 +87,31 @@ export default function FaTableFilters({
   const [result, setResult] = useState<Record<string, unknown>>(
     () => loadFilters() ?? {},
   );
+
+  const hideOptions = headers
+    .filter((x) => x.hideable)
+    .map((x) => ({
+      value: x.title,
+      label: ucwords((x.mask || x.title)?.replaceAll("_", " ")),
+    }));
+
+  const sortableCols = headers.filter((x) => x.sortable);
+  const sortOptions = [
+    {
+      value: "null",
+      label: lang.lastUpdate,
+    },
+    ...[
+      ...sortableCols.map((x) => ({
+        value: `${x.sort_value || x.title}__asc`,
+        label: `${ucwords(x.mask || x.title).replaceAll("_", " ")} - ASC`,
+      })),
+      ...sortableCols.map((x) => ({
+        value: `${x.sort_value || x.title}__desc`,
+        label: `${ucwords(x.mask || x.title).replaceAll("_", " ")} - DESC`,
+      })),
+    ].sort((a, b) => (a.label < b.label ? -1 : 1)),
+  ];
 
   const activeFilters = Object.keys(result).reduce((sum, key) => {
     const value = result[key];
@@ -201,8 +238,8 @@ export default function FaTableFilters({
   }, []);
 
   return (
-    <div className="v-table-filters">
-      <div className="vt-search">
+    <div className="fa-table-filters">
+      <div className="fa-table-search">
         {!!searchable && (
           <input
             type="text"
@@ -212,22 +249,25 @@ export default function FaTableFilters({
         )}
 
         {!!searchHelper && (
-          <span className="fa fa-circle-info vt-search-helper">
+          <span className="fa fa-circle-info fa-table-search-helper">
             <div className="tooltip">{searchHelper}</div>
           </span>
         )}
       </div>
 
-      <div className="vt-filters">
-        <div className="vt-filters-wrapper">
+      <div className="fa-table-filters-controls">
+        <div className="fa-table-filters-wrapper">
           {!!activeFilters && (
-            <button className="vt-clear-btn" onClick={() => clearFilters()}>
+            <button
+              className="fa-table-clear-btn"
+              onClick={() => clearFilters()}
+            >
               {lang.clearFilters}
             </button>
           )}
 
           <button
-            className="vt-filters-btn"
+            className="fa-table-filters-btn"
             onClick={() => setShowFilters(!showFilters)}
           >
             <svg
@@ -242,7 +282,7 @@ export default function FaTableFilters({
 
             <span>{lang.filters}</span>
             {!!activeFilters && (
-              <span className="vt-badge">{activeFilters}</span>
+              <span className="fa-table-badge">{activeFilters}</span>
             )}
           </button>
           {!!exportable && (
@@ -261,10 +301,25 @@ export default function FaTableFilters({
               <span>{lang.export}</span>
             </button>
           )}
-          <slot name="actions" />
+          {/* <slot name="actions" /> TODO add slot */}
         </div>
 
-        {showFilters ? <div>Modal de filtros</div> : ""}
+        {showFilters && (
+          <FaTableFiltersModal
+            filters={filters}
+            showOpts={showOptions}
+            hideOpts={hideOptions as FaTableFilterOptionObjValue[]}
+            sortOpts={sortOptions as FaTableFilterOptionObjValue[]}
+            lang={lang.filtersModal}
+            value={result}
+            onClose={() => setShowFilters(false)}
+            onClearAll={() => {}}
+            onFilter={(val) => {
+              setResult(val);
+              applyFilters(val);
+            }}
+          />
+        )}
       </div>
     </div>
   );
