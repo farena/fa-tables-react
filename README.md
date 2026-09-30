@@ -1,16 +1,19 @@
 # FaTables React
 
-A lightweight React table component for **server-side paginated data**. You fetch the data, FaTables renders it: configurable columns, value formatting, per-row action menus, custom cell renderers and a responsive pager, with no runtime dependencies besides React.
+A lightweight React table component for **server-side paginated data**. You fetch the data, FaTables renders it and tells you what to fetch next: search, filters, sorting, page size, hidden columns and page changes are all emitted as a single params object. It also handles value formatting, row selection, per-row action menus and custom cell renderers, with no runtime dependencies besides React.
 
-> FaTables React is a TypeScript port of the FaTables Vue component. The core table is usable today; search, filters and sorting are being ported (see [Roadmap](#roadmap)).
+> FaTables React is a TypeScript port of the FaTables Vue component. A few features of the Vue version are still being ported (see [Roadmap](#roadmap)).
 
 ## Features
 
-- **Server-side pagination**: pass a Laravel-style paginator response and react to page changes.
-- **Declarative columns**: nested keys (`role.name`), custom labels, widths, truncation.
+- **Server-side everything**: pagination, search, filters, sorting, page size and column visibility are sent to you through one `onChange` callback. Works out of the box with Laravel-style paginator responses.
+- **Filters panel** with select, multi-select, combobox, date, date range, number and boolean filters. The selection is remembered per page URL in `localStorage`.
+- **Declarative columns**: nested keys (`role.name`), custom labels, widths, truncation, sortable and hideable columns.
 - **Built-in formatters**: dates, date-times, locale dates, booleans, currency and prefix/suffix.
-- **Custom cells** through render functions (`slots`), plus an optional custom footer.
+- **Row selection** with a select-all checkbox (with indeterminate state), fully controlled by the parent.
+- **Custom cells** through render functions (`slots`), plus a custom footer and a toolbar slot for bulk actions.
 - **Row actions**: a "⋯" dropdown per row with callbacks or links, conditional visibility and middle-click detection. It stays within the viewport.
+- **Loading state**: a loader overlay is shown while a request is pending.
 - **Responsive pager**: numbered pages on desktop, previous/next on mobile.
 - **i18n-ready**: every UI string comes from a `lang` object.
 - **Themeable** through CSS custom properties, with automatic dark mode.
@@ -42,40 +45,102 @@ npm install ../fa-tables-react
 Import the component and its stylesheet once:
 
 ```tsx
-import { useEffect, useState } from "react";
-import FaTable, { type FaTableHeader, type FaTablePagination } from "fa-tables-react";
+import { useState } from "react";
+import FaTable, {
+  type FaTableFilter,
+  type FaTableHeader,
+  type FaTablePagination,
+  type FaTableProps,
+} from "fa-tables-react";
 import "fa-tables-react/style.css";
 
+type Params = Parameters<FaTableProps["onChange"]>[0];
+
 const headers: FaTableHeader[] = [
-  { title: "name" },
-  { title: "birth_date", mask: "Birth date", dateFormat: true },
-  { title: "role.name", mask: "Role" },
+  { title: "name", sortable: true },
+  {
+    title: "birth_date",
+    mask: "Birth date",
+    dateFormat: true,
+    sortable: true,
+    hideable: true,
+  },
+  { title: "role.name", mask: "Role", sort_value: "role_id" },
   { title: "validated", boolean: true },
 ];
 
+const filters: FaTableFilter[] = [
+  {
+    title: "Role",
+    type: "select",
+    column: "role",
+    options: [
+      { label: "Admin", value: "admin" },
+      { label: "Editor", value: "editor" },
+    ],
+    all_option: true,
+    default_value: "all",
+  },
+  { title: "Created between", type: "date-range", column: "created_at" },
+];
+
 export function Users() {
-  const [page, setPage] = useState(1);
   const [users, setUsers] = useState<FaTablePagination | null>(null);
 
-  useEffect(() => {
-    fetch(`/api/users?page=${page}`)
+  function onChange(params: Params) {
+    const query = new URLSearchParams({
+      page: String(params.page),
+      per_page: String(params.per_page),
+      search: params.search ?? "",
+      sort_by: params.sort_by ?? "",
+      sort_dir: params.sort_dir ?? "",
+      filters: JSON.stringify(params.filters ?? {}),
+    });
+
+    fetch(`/api/users?${query}`)
       .then((res) => res.json())
       .then(setUsers);
-  }, [page]);
+  }
 
   return (
     <FaTable
       headers={headers}
+      filters={filters}
       values={users}
-      onChangePage={setPage}
+      onChange={onChange}
       actions={[
         { title: "Edit", callback: (user) => console.log("edit", user) },
-        { title: "Open", to: (user) => `/users/${(user as { id: number }).id}` },
+        {
+          title: "Open",
+          to: (user) => `/users/${(user as { id: number }).id}`,
+        },
       ]}
     />
   );
 }
 ```
+
+### How data flows
+
+FaTables is **controlled**: it never fetches or paginates on its own.
+
+1. Whenever the user changes the page, searches, applies filters or clears them, the table calls `onChange(params)` with the full, updated set of params.
+2. You fetch the data and pass the response back as `values`.
+3. From the moment `onChange` is called until `values` receives a **new object**, the table shows a loader overlay. It is also shown while `values` is `null`. If a request fails, pass a new object anyway (for example, the previous page spread into a new object) to hide it.
+
+**Initial load:** when `initialGetter` is `true` (the default), the table calls `onChange` on mount, so you don't need to fetch the first page yourself. If it has `filters`, the call carries the stored or default filters; otherwise it carries the default params. With `initialGetter={false}`, no initial `onChange` is emitted: fetch the first page yourself (for example in a `useEffect`).
+
+### `onChange` params
+
+| Field         | Type                              | Description                                                                                  |
+| ------------- | --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `page`        | `number`                          | Requested page. Resets to `1` on search, on filter changes and on page size changes.         |
+| `per_page`    | `number`                          | Page size chosen in the filters panel (10, 25, 50, 100, 200, 500 or 1000). Starts at `25`.   |
+| `search`      | `string \| null`                  | Text submitted in the search box (on <kbd>Enter</kbd>).                                      |
+| `sort_by`     | `string \| null`                  | `sort_value` (or `title`) of the column chosen in "Sort by". `null` means the default order. |
+| `sort_dir`    | `"asc" \| "desc" \| null`         | Sort direction.                                                                              |
+| `hidden_cols` | `string[]`                        | `title`s of the columns the user has hidden. They are also hidden from the table.            |
+| `filters`     | `Record<string, unknown> \| null` | Filter values keyed by each filter's `column` (see [Filters](#filters)).                     |
 
 ### Expected data shape
 
@@ -89,69 +154,148 @@ export function Users() {
   "last_page": 20,
   "from": 1,
   "to": 15,
-  "data": [{ "id": 1, "name": "Pedro", "role": { "name": "admin" }, "checked": false }]
+  "data": [{ "id": 1, "name": "Pedro", "role": { "name": "admin" } }]
 }
 ```
 
-Rows are keyed by `id` when present, otherwise by index.
+Rows are keyed by the numeric field named by `primaryKey` when present, otherwise by index.
 
 ## API
 
 ### `<FaTable />` props
 
-| Prop           | Type                                | Default        | Description                                                        |
-| -------------- | ----------------------------------- | -------------- | ------------------------------------------------------------------ |
-| `headers`      | `FaTableHeader[]`                   | `[]`           | Column definitions.                                                |
-| `values`       | `FaTablePagination \| null`         | empty page     | Current page of data. The pager is hidden while it is `null`.       |
-| `onChangePage` | `(page: number) => void`            | —              | Called with the requested page number. The table does not fetch.  |
-| `actions`      | `FaTableAction[]`                   | `[]`           | Entries for the per-row actions menu. No menu column when empty.   |
-| `slots`        | `Record<string, FaTableSlotRender>` | `{}`           | Render functions referenced by `header.slot`, plus `footer`.       |
-| `checkeable`   | `boolean`                           | `false`        | Shows a checkbox column reflecting each row's `checked` field (read-only for now). |
-| `lang`         | `FaTableLang`                       | English        | UI strings (see [Localization](#localization)).                   |
+| Prop            | Type                                                  | Default    | Description                                                                                                                                |
+| --------------- | ----------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `headers`       | `FaTableHeader[]`                                     | `[]`       | Column definitions.                                                                                                                        |
+| `values`        | `FaTablePagination \| null`                           | empty page | Current page of data. While it is `null` the loader is shown and the pager is hidden.                                                      |
+| `onChange`      | `(params) => void`                                    | —          | **Required.** Called with the full params whenever data must be (re)fetched. See [`onChange` params](#onchange-params).                    |
+| `filters`       | `FaTableFilter[]`                                     | `[]`       | Filters shown in the filters panel.                                                                                                        |
+| `actions`       | `FaTableAction[]`                                     | `[]`       | Entries for the per-row actions menu. No menu column when empty.                                                                           |
+| `slots`         | `Record<string, FaTableSlotRender>`                   | `{}`       | Render functions referenced by `header.slot`, plus the reserved `footer` and `actions` slots.                                              |
+| `searchable`    | `boolean`                                             | `true`     | Shows the search box.                                                                                                                      |
+| `searchMinLen`  | `number`                                              | `3`        | Minimum search length. Shorter (non-empty) searches call `onError(lang.searchTooShort)` instead of `onChange`.                             |
+| `searchHelper`  | `string \| null`                                      | `null`     | Tooltip text shown next to the search box.                                                                                                 |
+| `noFilters`     | `boolean`                                             | `false`    | Hides the whole toolbar: search box, filters button, export button and `actions` slot.                                                     |
+| `initialGetter` | `boolean`                                             | `true`     | Emits `onChange` on mount (with the stored or default filters, if any). See [How data flows](#how-data-flows).                             |
+| `checkeable`    | `boolean`                                             | `false`    | Shows a checkbox column and a select-all checkbox in the header. Requires `primaryKey`.                                                    |
+| `primaryKey`    | `string`                                              | —          | Row field holding a numeric id. Used for selection and as the row key. **Required when `checkeable` is set** (the table throws otherwise). |
+| `checkedIds`    | `Set<number>`                                         | empty set  | Ids of the selected rows. Selection is controlled: update it from `onCheckChange`.                                                         |
+| `onCheckChange` | `(key: number \| number[], checked: boolean) => void` | —          | Called with a single id when a row is toggled, or with all ids of the current page from the select-all checkbox.                           |
+| `onError`       | `(msg: string) => void`                               | —          | Receives user-facing validation errors (currently, a search that is too short).                                                            |
+| `lang`          | `FaTableLang`                                         | English    | UI strings (see [Localization](#localization)).                                                                                            |
+
+`truncate`, `canMoveRows` and `clickeableRows` are declared in the types but not implemented yet (see [Roadmap](#roadmap)).
 
 ### `FaTableHeader`
 
-| Field              | Type                               | Description                                                                  |
-| ------------------ | ---------------------------------- | ---------------------------------------------------------------------------- |
-| `title`            | `string`                           | Key of the value in each row. Supports dot paths such as `role.name`.        |
-| `mask`             | `string`                           | Header label. Defaults to `title` with `_` replaced by spaces, title-cased. |
-| `width`            | `number`                           | Column width, in percent.                                                    |
-| `max_chars`        | `number`                           | Truncates the cell text with `...`. The full value is shown in the tooltip. |
-| `htmlFormat`       | `boolean`                          | Disables `max_chars` truncation for the column.                              |
-| `dateFormat`       | `boolean`                          | Formats as `YYYY-MM-DD`.                                                     |
-| `dateTimeFormat`   | `boolean`                          | Formats as `YYYY-MM-DD HH:mm`.                                               |
-| `dateLocaleFormat` | `boolean`                          | Formats as `MMM D, YYYY` (e.g. `May 15, 1980`).                             |
-| `boolean`          | `boolean`                          | Maps `true`/`false` to `lang.booleanValues` or to `booleanValues`.          |
-| `booleanValues`    | `{ true: string; false: string }`  | Per-column labels for boolean values.                                        |
-| `callback`         | `(value) => string`                | Custom formatter for the raw value.                                          |
-| `pre` / `after`    | `string`                           | Prefix and suffix. `pre: "$"` or `pre: "€"` formats the value as currency (`$1,234.50`). |
-| `slot`             | `string`                           | Name of a render function in `slots` that renders the whole cell.           |
+| Field              | Type                              | Description                                                                              |
+| ------------------ | --------------------------------- | ---------------------------------------------------------------------------------------- |
+| `title`            | `string`                          | Key of the value in each row. Supports dot paths such as `role.name`.                    |
+| `mask`             | `string`                          | Header label. Defaults to `title` with `_` replaced by spaces, title-cased.              |
+| `width`            | `number`                          | Column width, in percent.                                                                |
+| `max_chars`        | `number`                          | Truncates the cell text with `...`. The full value is shown in the tooltip.              |
+| `htmlFormat`       | `boolean`                         | Disables `max_chars` truncation for the column.                                          |
+| `dateFormat`       | `boolean`                         | Formats as `YYYY-MM-DD`.                                                                 |
+| `dateTimeFormat`   | `boolean`                         | Formats as `YYYY-MM-DD HH:mm`.                                                           |
+| `dateLocaleFormat` | `boolean`                         | Formats as `MMM D, YYYY` (e.g. `May 15, 1980`).                                          |
+| `boolean`          | `boolean`                         | Maps `true`/`false` to `lang.booleanValues` or to `booleanValues`.                       |
+| `booleanValues`    | `{ true: string; false: string }` | Per-column labels for boolean values.                                                    |
+| `callback`         | `(value) => string`               | Custom formatter for the raw value.                                                      |
+| `pre` / `after`    | `string`                          | Prefix and suffix. `pre: "$"` or `pre: "€"` formats the value as currency (`$1,234.50`). |
+| `slot`             | `string`                          | Name of a render function in `slots` that renders the whole cell.                        |
+| `sortable`         | `boolean`                         | Adds ascending and descending entries for the column to the "Sort by" select.            |
+| `sort_value`       | `string`                          | Value sent as `sort_by` for this column. Defaults to `title`.                            |
+| `hideable`         | `boolean`                         | Lets the user hide the column from the "Hidden columns" select.                          |
 
 Only one formatter is applied per column, in this order: date formats, `boolean`, then `callback`. `pre`/`after` are applied afterwards. Missing values render as `-`.
 
 ### `FaTableAction`
 
-| Field        | Type                                         | Description                                                      |
-| ------------ | -------------------------------------------- | ---------------------------------------------------------------- |
-| `title`      | `string`                                     | Menu label.                                                      |
-| `callback`   | `(item, middleClick?: boolean) => void`      | Called on click. `middleClick` is `true` for a middle-button click. |
-| `to`         | `(item) => string`                           | Renders the entry as a link to the returned URL instead.         |
-| `hideWhenFn` | `(item) => boolean`                          | Hides the entry for rows where it returns `true`.                |
+| Field        | Type                                    | Description                                                         |
+| ------------ | --------------------------------------- | ------------------------------------------------------------------- |
+| `title`      | `string`                                | Menu label.                                                         |
+| `callback`   | `(item, middleClick?: boolean) => void` | Called on click. `middleClick` is `true` for a middle-button click. |
+| `to`         | `(item) => string`                      | Renders the entry as a link to the returned URL instead.            |
+| `hideWhenFn` | `(item) => boolean`                     | Hides the entry for rows where it returns `true`.                   |
 
-### Custom cells and footer
+### Filters
+
+The filters panel opens from the "Filters" button. Besides the filters you configure, it always contains a page size select, and a "Sort by" and a "Hidden columns" select when some header is `sortable` or `hideable`. Nothing is emitted until the user clicks "Apply filters". The button shows a badge with the number of active filters, and a "Clear filters" button appears next to it that resets every filter to its default value.
+
+```ts
+interface FaTableFilter {
+  title: string; // label in the panel
+  type: FaTableFilterType; // see the table below
+  column: string; // key of the value in params.filters
+  options?: Array<string | { value: string | number | object; label: string }>;
+  all_option?: string | boolean; // adds an "all" option (true uses lang.filtersModal.allOption)
+  default_value?: unknown; // initial value and value restored by "Clear filters"
+  primary_key?: string; // see below
+}
+```
+
+| `type`            | Input                       | Value sent in `params.filters[column]`                                | Default value                |
+| ----------------- | --------------------------- | --------------------------------------------------------------------- | ---------------------------- |
+| `select`          | select                      | Selected option value, as a string. `"all"` for the all option.       | `null`                       |
+| `select-multiple` | multiple select             | Array of selected option values, as strings.                          | `[]`                         |
+| `combobox`        | text input with suggestions | Value of the matching option, or the free text typed by the user.     | `null`                       |
+| `date`            | date input                  | `"YYYY-MM-DD"`                                                        | `null`                       |
+| `date-range`      | two date inputs             | `{ start: "YYYY-MM-DD", end: "YYYY-MM-DD" }`, once both ends are set. | `{ start: null, end: null }` |
+| `number`          | number input                | `number`                                                              | `null`                       |
+| `boolean`         | Yes / No select             | `"1"` or `"0"` (`"all"` for the all option).                          | `false`                      |
+
+When a value is an object (or an array of objects, typically from a `combobox` with object values), the table sends only one of its fields: `primary_key` if set, otherwise the field named like `column`.
+
+**Persistence:** the panel values are stored in `localStorage` under a key derived from the current URL path and query string, and restored on the next visit. Stored values are discarded when the configured filter columns change. Submitting a search resets the filters to their defaults.
+
+### Row selection
+
+Selection is fully controlled by the parent and persists across pages, since it is just a set of ids:
+
+```tsx
+const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+
+function onCheckChange(key: number | number[], checked: boolean) {
+  const ids = Array.isArray(key) ? key : [key];
+  setCheckedIds((prev) => {
+    const next = new Set(prev);
+    ids.forEach((id) => (checked ? next.add(id) : next.delete(id)));
+    return next;
+  });
+}
+
+<FaTable
+  checkeable
+  primaryKey="id"
+  checkedIds={checkedIds}
+  onCheckChange={onCheckChange}
+  /* ... */
+/>;
+```
+
+The header checkbox is checked when every row of the current page is selected, and indeterminate when only some are.
+
+### Slots: custom cells, footer and toolbar
 
 ```tsx
 <FaTable
   headers={[{ title: "name" }, { title: "status", slot: "status" }]}
   values={values}
+  onChange={onChange}
   slots={{
     status: ({ item }) => <Badge status={(item as User).status} />,
     footer: () => <td colSpan={2}>Custom footer</td>,
+    actions: () =>
+      checkedIds.size > 0 && (
+        <button onClick={deleteSelected}>Delete selected</button>
+      ),
   }}
 />
 ```
 
-Slot functions receive `{ item, itemIndex }`. The `footer` slot must return table cells, which are placed inside a `<tfoot><tr>`.
+- Cell slots receive `{ item, itemIndex }`.
+- `footer` must return table cells, which are placed inside a `<tfoot><tr>`. It is replaced by the "no data" message when the page is empty.
+- `actions` is rendered in the toolbar, next to the filters button. It is a good place for bulk actions on the selected rows.
 
 ## Localization
 
@@ -174,10 +318,14 @@ const es: FaTableLang = {
       hiddenColumns: "Columnas ocultas",
       clearAll: "Limpiar todo",
       applyFilters: "Aplicar filtros",
+      allOption: "Todos",
+      yes: "Sí",
+      no: "No",
     },
   },
   pager: {
-    showingEntries: "Mostrando <b>{from}</b> a <b>{to}</b> de <b>{total}</b> registros",
+    showingEntries:
+      "Mostrando <b>{from}</b> a <b>{to}</b> de <b>{total}</b> registros",
     first: "Primera",
     last: "Última",
     next: "Siguiente",
@@ -187,7 +335,9 @@ const es: FaTableLang = {
 };
 ```
 
-`pager.showingEntries` is rendered as HTML, and `{from}`, `{to}` and `{total}` are replaced with the page values. Do not put untrusted input in it.
+- `filters.lastUpdate` is the label of the default entry of "Sort by" (no explicit sorting).
+- `filters.filtersModal.allOption` is the label used when a filter has `all_option: true`; `yes`/`no` label the options of `boolean` filters.
+- `pager.showingEntries` is rendered as HTML, and `{from}`, `{to}` and `{total}` are replaced with the page values. Do not put untrusted input in it.
 
 ## Theming
 
@@ -202,29 +352,30 @@ Override the CSS custom properties after importing the stylesheet:
   --fa-tables-border: #ccc;
   --fa-tables-radius: 0.25em;
   --fa-tables-shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px;
+  --fa-tables-filters-btn-bg: #292a2b;
+  --fa-tables-filters-btn-text: #fff;
+  --fa-tables-badge-bg: #fff;
+  --fa-tables-badge-text: #292a2b;
+  --fa-tables-backdrop: rgba(255, 255, 255, 0.6);
 }
 ```
 
 Dark values are applied automatically under `prefers-color-scheme: dark`.
 
+The `searchHelper` icon uses the Font Awesome classes `fa fa-circle-info`, so it is only visible when Font Awesome is loaded in your app.
+
 ## Roadmap
 
 These features exist in the Vue version and are being ported. Their props are already declared in `FaTableProps` but have no effect yet:
 
-- Search box (`searchable`, `searchMinLen`, `searchHelper`)
-- Filters panel (`filters`, `noFilters`), column sorting (`header.sortable`) and hiding (`header.hideable`)
-- Excel export (`exportable`)
-- Select-all checkbox and toggling rows with `checkeable`
-- Clickable and reorderable rows (`clickeableRows`, `canMoveRows`) and global `truncate`
-- Loading indicator
-
-Known limitation: the pager currently uses its built-in English strings, so `lang.pager` is not applied yet.
+- "Clear all" button inside the filters panel (use "Clear filters" in the toolbar meanwhile).
+- Clickable and reorderable rows (`clickeableRows`, `canMoveRows`) and global `truncate`.
 
 ## Development
 
 ```bash
 npm install
-npm run dev         # demo app (src/App.tsx) with hot reload
+npm run dev         # demo app (src/App.tsx) with hot reload and mock data
 npm run build       # library build → dist/ (ESM, CJS, style.css, .d.ts)
 npm run build:demo  # demo app build → dist-demo/
 npm run lint
@@ -234,12 +385,13 @@ Project layout:
 
 ```
 src/
-├── index.ts            # public API and exported types
-├── lib.ts              # library bundle entry (adds the stylesheet)
-├── components/         # FaTable, FaTableActions, FaTablePager
-├── types/              # FaTableTypes.ts
-├── utils/              # date and string helpers
-└── assets/css/         # component styles (SCSS)
+├── index.ts                  # public API and exported types
+├── lib.ts                    # library bundle entry (adds the stylesheet)
+├── components/               # FaTable, FaTableActions, FaTablePager, FaTableFilters, ...
+│   └── FilterSectionTypes/   # one component per filter type
+├── types/                    # FaTableTypes.ts
+├── utils/                    # date and string helpers, demo mock data
+└── assets/css/               # component styles (SCSS)
 ```
 
 Contributions are welcome. Please run `npm run lint` and `npm run build` before opening a pull request.

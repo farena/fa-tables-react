@@ -152,7 +152,6 @@ export interface FaTableProps {
   filters?: Array<FaTableFilter>;
   truncate?: [number, boolean];
   searchMinLen?: number;
-  exportable?: boolean;
   noFilters?: boolean;
   canMoveRows?: boolean;
   searchable?: boolean;
@@ -167,4 +166,14 @@ export interface FaTableProps {
   onChange: (params: FaTablePagerParams) => void | null;
   onCheckChange: (primaryKey: number | Array<number>, val: boolean) => void;
   onError?: (msg: string) => void | null;
+}
+
+export interface FaTablePaginatedResponse<T> {
+  total: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+  from: number;
+  to: number;
+  data: T[];
 }

@@ -9,7 +9,7 @@ import { parseToString, parseToLocale } from "../utils/date.ts";
 import FaTableActions from "./FaTableActions.tsx";
 import FaTablePager from "./FaTablePager.tsx";
 import FaTableFilters from "./FaTableFilters.tsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FaTableCheckbox from "./FaTableCheckbox.tsx";
 
 const defaultLang: FaTableLang = {
@@ -63,7 +63,6 @@ export default function FaTable({
   searchHelper = null,
   noFilters = false,
   searchable = true,
-  exportable = false,
   checkeable = false,
   primaryKey,
   checkedIds = new Set(),
@@ -81,6 +80,18 @@ export default function FaTable({
     );
   }
 
+  // When there are no filters to emit it (none configured, or hidden with
+  // `noFilters`), the table emits the initial request itself on mount.
+  const emitsInitialRequest =
+    initialGetter && (noFilters || filters.length === 0);
+  // `values` reference that was current when the last request was emitted.
+  // The table is loading until the parent passes a different `values` object.
+  const [pendingRequest, setPendingRequest] = useState<{
+    values: typeof values;
+  } | null>(() => (emitsInitialRequest ? { values } : null));
+  const loading = pendingRequest !== null && pendingRequest.values === values;
+  // Also covers the initial load, before the parent has passed any `values`.
+  const showLoader = loading || !values;
   const [faTableParams, setFaTableParams] = useState<FaTablePagerParams>({
     page: 1,
     search: null,
@@ -90,6 +101,14 @@ export default function FaTable({
     hidden_cols: [],
     filters: null,
   });
+
+  // On mount, notify the parent of the initial params. The loading state for
+  // this request was already set by the `pendingRequest` initializer.
+  useEffect(() => {
+    if (emitsInitialRequest) onChange(faTableParams);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const visibleHeaders = headers.filter(
     (x) => !faTableParams.hidden_cols.includes(x.title ?? ""),
   );
@@ -227,6 +246,7 @@ export default function FaTable({
   }
 
   function updateParams(changes: Partial<FaTablePagerParams>) {
+    setPendingRequest({ values });
     const next = { ...faTableParams, ...changes };
     setFaTableParams(next);
     onChange(next);
@@ -277,15 +297,12 @@ export default function FaTable({
     updateParams(next);
   }
 
-  function onExport() {}
-
   return (
     <>
       <div className="fa-table">
         {!noFilters && (
           <FaTableFilters
             searchable={searchable}
-            exportable={exportable}
             filters={filters}
             headers={headers}
             searchHelper={searchHelper}
@@ -294,97 +311,96 @@ export default function FaTable({
             slots={slots}
             onSearch={onSearch}
             onFilter={onFilter}
-            onExport={onExport}
           />
         )}
 
-        <div className="fa-table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                {!!checkeable && (
-                  <th style={{ width: "1%" }}>
-                    <FaTableCheckbox
-                      value={allChecked}
-                      indeterminate={someChecked}
-                      onChange={(val) => onCheckChange(pageKeys, val)}
-                    />
-                  </th>
-                )}
-                {visibleHeaders.map((head, index) => (
-                  <th
-                    key={head.title || index}
-                    style={{ width: head.width ? `${head.width}%` : "auto" }}
-                  >
-                    {parseHeadTitle(head)}
-                  </th>
-                ))}
-                {!!actions?.length && <th style={{ width: 1 }} />}
-              </tr>
-            </thead>
-            <tbody>
-              {/* LOADER */}
-              {!values?.data?.length && (
+        <div
+          className={`fa-table-body${showLoader ? " fa-table-body--loading" : ""}`}
+          aria-busy={showLoader}
+        >
+          <div className="fa-table-container">
+            <table className="table">
+              <thead>
                 <tr>
-                  <td
-                    colSpan={visibleHeaders.length + 1}
-                    style={{ textAlign: "center" }}
-                  >
-                    <div className="fa-table-loader-wrapper">
-                      <div className="fa-table-loader"></div>
-                    </div>
-                  </td>
+                  {!!checkeable && (
+                    <th style={{ width: "1%" }}>
+                      <FaTableCheckbox
+                        value={allChecked}
+                        indeterminate={someChecked}
+                        onChange={(val) => onCheckChange(pageKeys, val)}
+                      />
+                    </th>
+                  )}
+                  {visibleHeaders.map((head, index) => (
+                    <th
+                      key={head.title || index}
+                      style={{ width: head.width ? `${head.width}%` : "auto" }}
+                    >
+                      {parseHeadTitle(head)}
+                    </th>
+                  ))}
+                  {!!actions?.length && <th style={{ width: 1 }} />}
                 </tr>
-              )}
+              </thead>
+              <tbody>
+                {/* ROWS */}
+                {values?.data.map((item, itemIndex) => {
+                  const rowKey = getRowKey(item);
 
-              {/* ROWS */}
-              {values?.data.map((item, itemIndex) => {
-                const rowKey = getRowKey(item);
+                  return (
+                    <tr key={rowKey ?? itemIndex}>
+                      {/* CHECKBOX */}
+                      {!!checkeable && (
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <FaTableCheckbox
+                            value={
+                              rowKey !== undefined && checkedIds.has(rowKey)
+                            }
+                            onChange={(val) =>
+                              rowKey !== undefined && onCheckChange(rowKey, val)
+                            }
+                          />
+                        </td>
+                      )}
 
-                return (
-                  <tr key={rowKey ?? itemIndex}>
-                    {/* CHECKBOX */}
-                    {!!checkeable && (
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <FaTableCheckbox
-                          value={rowKey !== undefined && checkedIds.has(rowKey)}
-                          onChange={(val) =>
-                            rowKey !== undefined && onCheckChange(rowKey, val)
-                          }
-                        />
-                      </td>
-                    )}
+                      {/* COLUMNS */}
+                      {visibleHeaders.map((head, headIndex) => (
+                        <td
+                          key={head.title || headIndex}
+                          data-cell={parseHeadTitle(head)}
+                        >
+                          {renderColumn({
+                            head,
+                            item,
+                            itemIndex,
+                            parseValue,
+                          })}
+                        </td>
+                      ))}
 
-                    {/* COLUMNS */}
-                    {visibleHeaders.map((head, headIndex) => (
-                      <td
-                        key={head.title || headIndex}
-                        data-cell={parseHeadTitle(head)}
-                      >
-                        {renderColumn({
-                          head,
-                          item,
-                          itemIndex,
-                          parseValue,
-                        })}
-                      </td>
-                    ))}
+                      {/* actions */}
+                      {actions?.length && (
+                        <td
+                          className="fa-table-actions-cell"
+                          style={{ width: 1 }}
+                        >
+                          <FaTableActions item={item} actions={actions} />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {renderFooter()}
+            </table>
+          </div>
 
-                    {/* actions */}
-                    {actions?.length && (
-                      <td
-                        className="fa-table-actions-cell"
-                        style={{ width: 1 }}
-                      >
-                        <FaTableActions item={item} actions={actions} />
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-            {renderFooter()}
-          </table>
+          {/* LOADER */}
+          {showLoader && (
+            <div className="fa-table-backdrop">
+              <div className="fa-table-loader"></div>
+            </div>
+          )}
         </div>
 
         {!!values && (

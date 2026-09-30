@@ -170,6 +170,11 @@ export default function FaTableFiltersModal({
                 }
                 column={f.column}
                 sectionType={f.type}
+                allOption={
+                  f.all_option === true
+                    ? lang.allOption
+                    : f.all_option || undefined
+                }
                 lang={lang}
                 onChange={(val) => updateResult({ [f.column]: val })}
               />

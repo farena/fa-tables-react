@@ -1,37 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import FaTable from "./components/FaTable";
 import type {
   FaTableAction,
   FaTableFilter,
   FaTableHeader,
   FaTablePagerParams,
+  FaTablePaginatedResponse,
 } from "./types/FaTableTypes";
-
-interface Role {
-  name: string;
-}
-
-interface User {
-  user_id: number;
-  status: string;
-  name: string;
-  username: string;
-  birth_date: string;
-  age: number;
-  validated: boolean;
-  role: Role;
-  checked: boolean;
-}
-
-interface UserResponse {
-  total: number;
-  per_page: number;
-  current_page: number;
-  last_page: number;
-  from: number;
-  to: number;
-  data: User[];
-}
+import { filterMockData, type User } from "./utils/mock-data";
 
 const callbacks = {
   onShowDetails() {
@@ -108,7 +84,7 @@ const tableFilters: Array<FaTableFilter> = [
     title: "Role",
     type: "select",
     column: "role",
-    default_value: "admin",
+    default_value: null,
     options: [
       { label: "Admin", value: "admin" },
       { label: "Editor", value: "editor" },
@@ -155,75 +131,25 @@ const tableFilters: Array<FaTableFilter> = [
     title: "Validated",
     type: "boolean",
     column: "validated",
+    all_option: true,
+    default_value: "all",
   },
 ];
 
-function getData(): Promise<UserResponse> {
+function getData(
+  params: FaTablePagerParams,
+): Promise<FaTablePaginatedResponse<User>> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const values: UserResponse = {
-        total: 300,
-        per_page: 15,
-        current_page: 1,
-        last_page: 11,
-        from: 1,
-        to: 15,
-        data: [
-          {
-            user_id: 1,
-            status: "active",
-            name: "Pedro Aznar",
-            username: "paznar",
-            birth_date: "1980-05-15",
-            age: 18,
-            validated: true,
-            role: {
-              name: "admin",
-            },
-            checked: false,
-          },
-          {
-            user_id: 2,
-            status: "inactive",
-            name: "Charlie Alberti",
-            username: "chalberti",
-            birth_date: "1975-03-25",
-            age: 20,
-            validated: false,
-            role: {
-              name: "manager",
-            },
-            checked: false,
-          },
-          {
-            user_id: 3,
-            status: "active",
-            name: "Gustavo Cerati",
-            username: "gcerati",
-            birth_date: "1990-10-02",
-            age: 25,
-            validated: false,
-            role: {
-              name: "user",
-            },
-            checked: false,
-          },
-        ],
-      };
-      resolve(values);
+      resolve(filterMockData(params));
     }, 1000);
   });
 }
 
 export default function App() {
-  const [tableValues, setTableValues] = useState<UserResponse | null>(null);
+  const [tableValues, setTableValues] =
+    useState<FaTablePaginatedResponse<User> | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
-
-  useEffect(() => {
-    getData().then((data) => {
-      setTableValues(data);
-    });
-  }, []);
 
   function onCheckChange(primaryKey: number | Array<number>, val: boolean) {
     const ids = Array.isArray(primaryKey) ? primaryKey : [primaryKey];
@@ -240,6 +166,9 @@ export default function App() {
 
   function onChange(params: FaTablePagerParams) {
     console.log(`On change:`, params);
+    getData(params).then((data) => {
+      setTableValues(data);
+    });
   }
 
   function onError(msg: string) {

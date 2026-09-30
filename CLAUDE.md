@@ -19,7 +19,7 @@ There is no test runner configured. Formatting is done with Prettier via the edi
 FaTables is a table component with server-side pagination, filtering and sorting, being **ported from an existing Vue component to React 19 + TypeScript**. Traces of the Vue origin are intentional context, not dead code to clean up blindly:
 
 - Commented-out Vue template fragments in `FaTable.tsx` (e.g. `<VueTableFilters ... />`, the check-all checkbox, the loader) mark features not yet ported.
-- `FaTableProps` in `src/types/FaTableTypes.ts` declares the full target API (`filters`, `searchable`, `exportable`, `truncate`, `canMoveRows`, `clickeableRows`, etc.), but only `headers`, `actions`, `values`, `checkeable`, `slots`, `lang` and `onChangePage` are currently implemented. Check the component before assuming a prop works.
+- `FaTableProps` in `src/types/FaTableTypes.ts` declares the full target API (`filters`, `searchable`, `truncate`, `canMoveRows`, `clickeableRows`, etc.), but only `headers`, `actions`, `values`, `checkeable`, `slots`, `lang` and `onChangePage` are currently implemented. Check the component before assuming a prop works.
 
 ## Architecture
 

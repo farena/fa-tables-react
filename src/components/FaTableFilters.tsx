@@ -52,12 +52,10 @@ interface FaTableFiltersProps {
   searchable: boolean;
   filters: Array<FaTableFilter>;
   headers: Array<FaTableHeader>;
-  exportable: boolean;
   initialGetter: boolean;
   searchHelper?: string | null;
   lang?: FaTableFiltersLang;
   slots?: Record<string, FaTableSlotRender>;
-  onExport?: () => void;
   onSearch?: (value: string) => void;
   onFilter: (filters: Record<string, unknown>) => void;
 }
@@ -73,12 +71,10 @@ export default function FaTableFilters({
   searchable = true,
   filters = [],
   headers = [],
-  exportable = false,
   initialGetter = true,
   searchHelper = null,
   lang = defaultLang,
   slots,
-  onExport,
   onSearch,
   onFilter,
 }: FaTableFiltersProps) {
@@ -288,22 +284,6 @@ export default function FaTableFilters({
               <span className="fa-table-badge">{activeFilters}</span>
             )}
           </button>
-          {!!exportable && (
-            <button onClick={() => onExport?.()}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                width="1em"
-                height="1em"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
-                <path d="M8 13h2v2H8zm0 4h2v2H8zm3-4h2v2h-2zm0 4h2v2h-2zm3-4h2v2h-2zm0 4h2v2h-2z" />
-              </svg>
-              <span>{lang.export}</span>
-            </button>
-          )}
 
           {!!slots?.actions &&
             slots.actions({ item: undefined, itemIndex: -1 })}
