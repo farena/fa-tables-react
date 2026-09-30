@@ -12,7 +12,8 @@ interface Role {
 }
 
 interface User {
-  id: number;
+  user_id: number;
+  status: string;
   name: string;
   username: string;
   birth_date: string;
@@ -48,6 +49,10 @@ const callbacks = {
 };
 
 const tableHeaders: Array<FaTableHeader> = [
+  {
+    title: "status",
+    slot: "status",
+  },
   {
     title: "name",
     sortable: true,
@@ -165,7 +170,8 @@ function getData(): Promise<UserResponse> {
         to: 15,
         data: [
           {
-            id: 1,
+            user_id: 1,
+            status: "active",
             name: "Pedro Aznar",
             username: "paznar",
             birth_date: "1980-05-15",
@@ -177,7 +183,8 @@ function getData(): Promise<UserResponse> {
             checked: false,
           },
           {
-            id: 2,
+            user_id: 2,
+            status: "inactive",
             name: "Charlie Alberti",
             username: "chalberti",
             birth_date: "1975-03-25",
@@ -189,7 +196,8 @@ function getData(): Promise<UserResponse> {
             checked: false,
           },
           {
-            id: 3,
+            user_id: 3,
+            status: "active",
             name: "Gustavo Cerati",
             username: "gcerati",
             birth_date: "1990-10-02",
@@ -203,18 +211,32 @@ function getData(): Promise<UserResponse> {
         ],
       };
       resolve(values);
-    }, 5000);
+    }, 1000);
   });
 }
 
 export default function App() {
   const [tableValues, setTableValues] = useState<UserResponse | null>(null);
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     getData().then((data) => {
       setTableValues(data);
     });
   }, []);
+
+  function onCheckChange(primaryKey: number | Array<number>, val: boolean) {
+    const ids = Array.isArray(primaryKey) ? primaryKey : [primaryKey];
+
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => {
+        if (val) next.add(id);
+        else next.delete(id);
+      });
+      return next;
+    });
+  }
 
   function onChange(params: FaTablePagerParams) {
     console.log(`On change:`, params);
@@ -223,6 +245,29 @@ export default function App() {
   function onError(msg: string) {
     console.error(msg);
   }
+
+  const slots = {
+    actions: () => {
+      // Bulk actions. Rendered only when checked rows
+      if (!checkedIds.size) return;
+
+      return <button className="btn btn-danger">Delete bulk</button>;
+    },
+    status: (props: { item: unknown; itemIndex: number }) => {
+      const item = props?.item as User | undefined;
+
+      if (!item?.status) return <span></span>;
+
+      return <div className={`badge ${item.status}`}>{item.status}</div>;
+    },
+    footer: () => {
+      return (
+        <td colSpan={1000} style={{ textAlign: "center" }}>
+          <span>- Footer data -</span>
+        </td>
+      );
+    },
+  };
 
   return (
     <>
@@ -239,8 +284,13 @@ export default function App() {
         actions={tableActions}
         filters={tableFilters}
         values={tableValues}
+        checkedIds={checkedIds}
+        primaryKey="user_id"
+        onCheckChange={onCheckChange}
         onChange={onChange}
         onError={onError}
+        checkeable
+        slots={slots}
       />
     </>
   );

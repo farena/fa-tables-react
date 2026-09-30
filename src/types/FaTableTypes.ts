@@ -140,7 +140,7 @@ export interface FaTablePagination {
   data: Array<unknown & { checked: boolean }>;
 }
 
-export type FaTableSlotRender = (props?: {
+export type FaTableSlotRender = (props: {
   item: unknown;
   itemIndex: number;
 }) => React.ReactNode;
@@ -157,11 +157,14 @@ export interface FaTableProps {
   canMoveRows?: boolean;
   searchable?: boolean;
   checkeable?: boolean;
+  checkedIds?: Set<number>;
+  primaryKey?: string; // Prop used to eval checkedIds
   clickeableRows?: boolean;
   initialGetter?: boolean;
   searchHelper?: string | null;
   lang?: FaTableLang;
   slots?: Record<string, FaTableSlotRender>;
   onChange: (params: FaTablePagerParams) => void | null;
+  onCheckChange: (primaryKey: number | Array<number>, val: boolean) => void;
   onError?: (msg: string) => void | null;
 }

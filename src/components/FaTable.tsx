@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   FaTableLang,
   FaTableProps,
@@ -11,6 +10,7 @@ import FaTableActions from "./FaTableActions.tsx";
 import FaTablePager from "./FaTablePager.tsx";
 import FaTableFilters from "./FaTableFilters.tsx";
 import { useState } from "react";
+import FaTableCheckbox from "./FaTableCheckbox.tsx";
 
 const defaultLang: FaTableLang = {
   noDataToShow: "No data to show",
@@ -65,13 +65,22 @@ export default function FaTable({
   searchable = true,
   exportable = false,
   checkeable = false,
+  primaryKey,
+  checkedIds = new Set(),
   initialGetter = true,
   searchMinLen = 3,
   slots = {},
   lang = defaultLang,
+  onCheckChange,
   onChange,
   onError,
 }: FaTableProps) {
+  if (checkeable && !primaryKey) {
+    throw new Error(
+      "[FaTable error]: Checkeable active but no PrimaryKey configured.",
+    );
+  }
+
   const [faTableParams, setFaTableParams] = useState<FaTablePagerParams>({
     page: 1,
     search: null,
@@ -84,6 +93,12 @@ export default function FaTable({
   const visibleHeaders = headers.filter(
     (x) => !faTableParams.hidden_cols.includes(x.title ?? ""),
   );
+  const pageKeys = (values?.data ?? [])
+    .map(getRowKey)
+    .filter((key): key is number => key !== undefined);
+  const checkedCount = pageKeys.filter((key) => checkedIds.has(key)).length;
+  const allChecked = pageKeys.length > 0 && checkedCount === pageKeys.length;
+  const someChecked = checkedCount > 0 && !allChecked;
 
   const parseValue = (
     item: unknown,
@@ -157,6 +172,16 @@ export default function FaTable({
     }
 
     return current !== undefined && current !== null ? String(current) : "-";
+  }
+
+  /**
+   * Returns the row's primary key value, or undefined if it's missing or not a valid key.
+   */
+  function getRowKey(item: unknown): number | undefined {
+    if (!primaryKey || typeof item !== "object" || item === null)
+      return undefined;
+    const key = (item as Record<string, unknown>)[primaryKey];
+    return typeof key === "number" ? key : undefined;
   }
 
   function renderColumn({
@@ -266,6 +291,7 @@ export default function FaTable({
             searchHelper={searchHelper}
             initialGetter={initialGetter}
             lang={lang.filters}
+            slots={slots}
             onSearch={onSearch}
             onFilter={onFilter}
             onExport={onExport}
@@ -277,8 +303,12 @@ export default function FaTable({
             <thead>
               <tr>
                 {!!checkeable && (
-                  <th style={{ width: 1 }}>
-                    {/* <input v-model="checkAll" type="checkbox" /> TODO: two way data binding */}
+                  <th style={{ width: "1%" }}>
+                    <FaTableCheckbox
+                      value={allChecked}
+                      indeterminate={someChecked}
+                      onChange={(val) => onCheckChange(pageKeys, val)}
+                    />
                   </th>
                 )}
                 {visibleHeaders.map((head, index) => (
@@ -308,38 +338,50 @@ export default function FaTable({
               )}
 
               {/* ROWS */}
-              {values?.data.map((item, itemIndex) => (
-                <tr key={(item as any).id || itemIndex}>
-                  {/* CHECKBOX */}
-                  {!!checkeable && (
-                    <td onClick={(e) => e.stopPropagation()}>
-                      <input checked={item.checked} type="checkbox" />
-                    </td>
-                  )}
+              {values?.data.map((item, itemIndex) => {
+                const rowKey = getRowKey(item);
 
-                  {/* COLUMNS */}
-                  {visibleHeaders.map((head, headIndex) => (
-                    <td
-                      key={head.title || headIndex}
-                      data-cell={parseHeadTitle(head)}
-                    >
-                      {renderColumn({
-                        head,
-                        item,
-                        itemIndex,
-                        parseValue,
-                      })}
-                    </td>
-                  ))}
+                return (
+                  <tr key={rowKey ?? itemIndex}>
+                    {/* CHECKBOX */}
+                    {!!checkeable && (
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <FaTableCheckbox
+                          value={rowKey !== undefined && checkedIds.has(rowKey)}
+                          onChange={(val) =>
+                            rowKey !== undefined && onCheckChange(rowKey, val)
+                          }
+                        />
+                      </td>
+                    )}
 
-                  {/* actions */}
-                  {actions?.length && (
-                    <td className="fa-table-actions-cell" style={{ width: 1 }}>
-                      <FaTableActions item={item} actions={actions} />
-                    </td>
-                  )}
-                </tr>
-              ))}
+                    {/* COLUMNS */}
+                    {visibleHeaders.map((head, headIndex) => (
+                      <td
+                        key={head.title || headIndex}
+                        data-cell={parseHeadTitle(head)}
+                      >
+                        {renderColumn({
+                          head,
+                          item,
+                          itemIndex,
+                          parseValue,
+                        })}
+                      </td>
+                    ))}
+
+                    {/* actions */}
+                    {actions?.length && (
+                      <td
+                        className="fa-table-actions-cell"
+                        style={{ width: 1 }}
+                      >
+                        <FaTableActions item={item} actions={actions} />
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
             {renderFooter()}
           </table>

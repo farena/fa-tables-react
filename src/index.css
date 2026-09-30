@@ -63,3 +63,29 @@ body {
 hr {
   opacity: 0.25;
 }
+
+.badge {
+  font-size: 10px;
+  border-radius: 0.25em;
+  text-align: center;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.badge.active {
+  background-color: #3cb87a81;
+}
+.badge.inactive {
+  background-color: #6a6d6c7c;
+}
+
+.btn {
+  height: 30px;
+  font-size: 0.9em;
+  border: unset;
+  border-radius: 0.25em;
+  padding: 0.25em 0.5em;
+}
+.btn.btn-danger {
+  background-color: rgb(179, 33, 33);
+}

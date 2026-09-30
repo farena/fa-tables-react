@@ -4,6 +4,7 @@ import type {
   FaTableFilterOptionObjValue,
   FaTableFilterType,
   FaTableHeader,
+  FaTableSlotRender,
 } from "../types/FaTableTypes";
 import FaTableFiltersModal from "./FaTableFiltersModal";
 import { ucwords } from "../utils/ucwords";
@@ -55,6 +56,7 @@ interface FaTableFiltersProps {
   initialGetter: boolean;
   searchHelper?: string | null;
   lang?: FaTableFiltersLang;
+  slots?: Record<string, FaTableSlotRender>;
   onExport?: () => void;
   onSearch?: (value: string) => void;
   onFilter: (filters: Record<string, unknown>) => void;
@@ -75,6 +77,7 @@ export default function FaTableFilters({
   initialGetter = true,
   searchHelper = null,
   lang = defaultLang,
+  slots,
   onExport,
   onSearch,
   onFilter,
@@ -301,7 +304,9 @@ export default function FaTableFilters({
               <span>{lang.export}</span>
             </button>
           )}
-          {/* <slot name="actions" /> TODO add slot */}
+
+          {!!slots?.actions &&
+            slots.actions({ item: undefined, itemIndex: -1 })}
         </div>
 
         {showFilters && (
