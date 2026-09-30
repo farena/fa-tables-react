@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 export interface FaTableLang {
   noDataToShow: string;
   searchTooShort: string;
@@ -143,7 +145,7 @@ export interface FaTablePagination {
 export type FaTableSlotRender = (props: {
   item: unknown;
   itemIndex: number;
-}) => React.ReactNode;
+}) => ReactNode;
 
 /** Payload of `onChangeOrder`: the moved row and its requested `sort` value. */
 export interface FaTableChangeOrderEvent {

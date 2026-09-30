@@ -19,21 +19,8 @@ A lightweight React table component for **server-side paginated data**. You fetc
 
 ## Installation
 
-The package is not published to npm yet. Install it from GitHub; the `prepare` script builds it on install:
-
 ```bash
-npm install github:<owner>/fa-tables-react
-```
-
-To work against a local checkout, build it and install it by path:
-
-```bash
-# in fa-tables-react/
-npm install
-npm run build
-
-# in your app
-npm install ../fa-tables-react
+npm install fa-tables-react
 ```
 
 **Peer dependencies:** `react` and `react-dom` 18 or later.
@@ -47,12 +34,10 @@ import { useState } from "react";
 import FaTable, {
   type FaTableFilter,
   type FaTableHeader,
+  type FaTablePagerParams,
   type FaTablePagination,
-  type FaTableProps,
 } from "fa-tables-react";
 import "fa-tables-react/style.css";
-
-type Params = Parameters<FaTableProps["onChange"]>[0];
 
 const headers: FaTableHeader[] = [
   { title: "name", sortable: true },
@@ -85,7 +70,7 @@ const filters: FaTableFilter[] = [
 export function Users() {
   const [users, setUsers] = useState<FaTablePagination | null>(null);
 
-  function onChange(params: Params) {
+  function onChange(params: FaTablePagerParams) {
     const query = new URLSearchParams({
       page: String(params.page),
       per_page: String(params.per_page),
@@ -397,3 +382,7 @@ src/
 ```
 
 Contributions are welcome. Please run `npm run lint` and `npm run build` before opening a pull request.
+
+## License
+
+[MIT](LICENSE)

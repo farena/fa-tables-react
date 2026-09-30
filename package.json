@@ -1,7 +1,28 @@
 {
   "name": "fa-tables-react",
-  "version": "0.0.0",
+  "version": "1.1.4",
   "description": "React table component with server-side pagination, configurable columns, row actions and render slots.",
+  "keywords": [
+    "react",
+    "table",
+    "datatable",
+    "data-table",
+    "pagination",
+    "server-side",
+    "filters",
+    "laravel",
+    "typescript"
+  ],
+  "author": "Federico Arena",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/farena/fa-tables-react.git"
+  },
+  "homepage": "https://github.com/farena/fa-tables-react#readme",
+  "bugs": {
+    "url": "https://github.com/farena/fa-tables-react/issues"
+  },
   "type": "module",
   "files": [
     "dist"
@@ -27,7 +48,8 @@
     "build:demo": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "prepare": "npm run build:lib"
+    "prepare": "npm run build:lib",
+    "prepublishOnly": "npm run lint"
   },
   "peerDependencies": {
     "react": ">=18",
