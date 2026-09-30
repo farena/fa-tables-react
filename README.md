@@ -368,7 +368,6 @@ The `searchHelper` icon uses the Font Awesome classes `fa fa-circle-info`, so it
 
 These features exist in the Vue version and are being ported. Their props are already declared in `FaTableProps` but have no effect yet:
 
-- "Clear all" button inside the filters panel (use "Clear filters" in the toolbar meanwhile).
 - Clickable and reorderable rows (`clickeableRows`, `canMoveRows`) and global `truncate`.
 
 ## Development

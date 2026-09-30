@@ -37,6 +37,7 @@ interface FaTableFiltersModalProps {
   value: Record<string, unknown>;
   /** Called once the exit animation has finished, so the parent can unmount the modal. */
   onClose: () => void;
+  /** Resets the filters to their defaults and applies them; the modal closes afterwards. */
   onClearAll: () => void;
   onFilter: (result: Record<string, unknown>) => void;
 }
@@ -75,8 +76,10 @@ export default function FaTableFiltersModal({
     pressedOnBackdrop.current = false;
   }
 
-  function clearAll() {
+  function clearAll(e: MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault();
     onClearAll();
+    close();
   }
 
   function applyFilters() {

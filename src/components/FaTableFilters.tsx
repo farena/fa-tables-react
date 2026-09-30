@@ -298,7 +298,7 @@ export default function FaTableFilters({
             lang={lang.filtersModal}
             value={result}
             onClose={() => setShowFilters(false)}
-            onClearAll={() => {}}
+            onClearAll={() => clearFilters()}
             onFilter={(val) => {
               setResult(val);
               applyFilters(val);
