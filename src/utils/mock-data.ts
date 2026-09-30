@@ -115,7 +115,6 @@ function generateUsers(startId: number, count: number): User[] {
 
 const mockData: User[] = generateUsers(4, 120);
 
-console.log(mockData.length);
 
 /** Columns inspected by the free-text search. */
 const SEARCHABLE_COLUMNS = ["name", "username", "status", "role.name"];

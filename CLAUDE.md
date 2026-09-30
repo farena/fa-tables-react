@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `npm run dev` — Vite dev server with HMR (serves the demo in `src/App.tsx`)
 - `npm run build` / `npm run build:lib` — library build into `dist/`: `vite.lib.config.ts` bundles ESM + CJS + `style.css`, then `tsc -p tsconfig.lib.json` emits `.d.ts` files. Also runs on `prepare`, so installs from git build the package.
-- `npm run build:demo` — type-check (`tsc -b`) and build the demo app into `dist-demo/`
+- `npm run build:demo` — type-check (`tsc -b`) and build the demo app into `dist-demo/`. The demo is a playground (props panel, event log, generated JSX; helpers in `src/playground/`) deployed to GitHub Pages by `.github/workflows/pages.yml` on every push to `master`; `vite.config.ts` uses `base: './'` so it works under the `/fa-tables-react/` subpath.
 - `npm run lint` — ESLint (flat config in `eslint.config.js`)
 - `npm run preview` — serve the built demo
 

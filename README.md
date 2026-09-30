@@ -2,6 +2,8 @@
 
 A lightweight React table component for **server-side paginated data**. You fetch the data, FaTables renders it and tells you what to fetch next: search, filters, sorting, page size, hidden columns and page changes are all emitted as a single params object. It also handles value formatting, row selection, per-row action menus and custom cell renderers, with no runtime dependencies besides React.
 
+**[Live playground](https://farena.github.io/fa-tables-react/)**: toggle the props and watch the events the table emits.
+
 ## Features
 
 - **Server-side everything**: pagination, search, filters, sorting, page size and column visibility are sent to you through one `onChange` callback. Works out of the box with Laravel-style paginator responses.
