@@ -9,8 +9,14 @@ import { parseToString, parseToLocale } from "../utils/date.ts";
 import FaTableActions from "./FaTableActions.tsx";
 import FaTablePager from "./FaTablePager.tsx";
 import FaTableFilters from "./FaTableFilters.tsx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import FaTableCheckbox from "./FaTableCheckbox.tsx";
+
+/** A press longer than this (ms) is treated as text selection, not a row click. */
+const ROW_HOLD_THRESHOLD = 150;
+
+/** Elements that handle their own clicks, so clicking them doesn't trigger `onRowClick`. */
+const INTERACTIVE_SELECTOR = "a, button, input, select, textarea, label";
 
 const defaultLang: FaTableLang = {
   noDataToShow: "No data to show",
@@ -64,6 +70,9 @@ export default function FaTable({
   noFilters = false,
   searchable = true,
   checkeable = false,
+  clickeableRows = false,
+  canMoveRows = false,
+  truncate = false,
   primaryKey,
   checkedIds = new Set(),
   initialGetter = true,
@@ -73,6 +82,8 @@ export default function FaTable({
   onCheckChange,
   onChange,
   onError,
+  onRowClick,
+  onChangeOrder,
 }: FaTableProps) {
   if (checkeable && !primaryKey) {
     throw new Error(
@@ -92,6 +103,8 @@ export default function FaTable({
   const loading = pendingRequest !== null && pendingRequest.values === values;
   // Also covers the initial load, before the parent has passed any `values`.
   const showLoader = loading || !values;
+  // Event timestamp of the last mousedown on a row, used to tell clicks from click-and-hold.
+  const rowPressStart = useRef(0);
   const [faTableParams, setFaTableParams] = useState<FaTablePagerParams>({
     page: 1,
     search: null,
@@ -115,6 +128,7 @@ export default function FaTable({
   const pageKeys = (values?.data ?? [])
     .map(getRowKey)
     .filter((key): key is number => key !== undefined);
+  const hasActionsCell = !!actions?.length || canMoveRows;
   const checkedCount = pageKeys.filter((key) => checkedIds.has(key)).length;
   const allChecked = pageKeys.length > 0 && checkedCount === pageKeys.length;
   const someChecked = checkedCount > 0 && !allChecked;
@@ -163,6 +177,10 @@ export default function FaTable({
     if (head.max_chars && resultStr.length > head.max_chars)
       result = `${resultStr.slice(0, head.max_chars)}...`;
 
+    const truncatedStr = String(result);
+    if (truncate && truncatedStr.length > truncate)
+      result = `${truncatedStr.slice(0, truncate)}...`;
+
     return String(result) || "-";
   };
 
@@ -201,6 +219,38 @@ export default function FaTable({
       return undefined;
     const key = (item as Record<string, unknown>)[primaryKey];
     return typeof key === "number" ? key : undefined;
+  }
+
+  /**
+   * Emits `onRowClick`, unless the press was held long enough to be a text
+   * selection or the click landed on an interactive element inside the row.
+   */
+  function handleRowClick(
+    e: React.MouseEvent<HTMLTableRowElement>,
+    item: unknown,
+    itemIndex: number,
+    middleClick: boolean,
+  ) {
+    if (!clickeableRows || !onRowClick) return;
+    if (e.timeStamp - rowPressStart.current >= ROW_HOLD_THRESHOLD) return;
+
+    const target = e.target as Element;
+    const interactive = target.closest(INTERACTIVE_SELECTOR);
+    if (interactive && e.currentTarget.contains(interactive)) return;
+
+    onRowClick(item, itemIndex, middleClick);
+  }
+
+  /** Requests moving the row one position up (`decrease`) or down (`increase`) through its `sort` field. */
+  function moveRow(item: unknown, direction: "increase" | "decrease") {
+    const sort = Number((item as Record<string, unknown>)?.sort);
+    if (Number.isNaN(sort)) return;
+
+    setPendingRequest({ values });
+    onChangeOrder?.({
+      row: item,
+      newSort: direction === "increase" ? sort + 1 : sort - 1,
+    });
   }
 
   function renderColumn({
@@ -319,7 +369,9 @@ export default function FaTable({
           aria-busy={showLoader}
         >
           <div className="fa-table-container">
-            <table className="table">
+            <table
+              className={`table${clickeableRows ? " fa-table-hover" : ""}`}
+            >
               <thead>
                 <tr>
                   {!!checkeable && (
@@ -339,7 +391,7 @@ export default function FaTable({
                       {parseHeadTitle(head)}
                     </th>
                   ))}
-                  {!!actions?.length && <th style={{ width: 1 }} />}
+                  {hasActionsCell && <th style={{ width: 1 }} />}
                 </tr>
               </thead>
               <tbody>
@@ -348,7 +400,18 @@ export default function FaTable({
                   const rowKey = getRowKey(item);
 
                   return (
-                    <tr key={rowKey ?? itemIndex}>
+                    <tr
+                      key={rowKey ?? itemIndex}
+                      className={
+                        clickeableRows ? "fa-table-row-clickeable" : undefined
+                      }
+                      onMouseDown={(e) => (rowPressStart.current = e.timeStamp)}
+                      onClick={(e) => handleRowClick(e, item, itemIndex, false)}
+                      onAuxClick={(e) =>
+                        e.button === 1 &&
+                        handleRowClick(e, item, itemIndex, true)
+                      }
+                    >
                       {/* CHECKBOX */}
                       {!!checkeable && (
                         <td onClick={(e) => e.stopPropagation()}>
@@ -379,12 +442,52 @@ export default function FaTable({
                       ))}
 
                       {/* actions */}
-                      {actions?.length && (
+                      {hasActionsCell && (
                         <td
                           className="fa-table-actions-cell"
                           style={{ width: 1 }}
+                          // The actions menu is portaled, but its React events
+                          // still bubble here: keep them away from the row.
+                          onClick={(e) => e.stopPropagation()}
+                          onAuxClick={(e) => e.stopPropagation()}
                         >
-                          <FaTableActions item={item} actions={actions} />
+                          <div>
+                            {canMoveRows && (
+                              <>
+                                <button
+                                  className="fa-table-move-btn"
+                                  onClick={() => moveRow(item, "decrease")}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height="1em"
+                                    viewBox="0 -960 960 960"
+                                    width="1em"
+                                    fill="#e3e3e3"
+                                  >
+                                    <path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z" />
+                                  </svg>
+                                </button>
+                                <button
+                                  className="fa-table-move-btn"
+                                  onClick={() => moveRow(item, "increase")}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    height="1em"
+                                    viewBox="0 -960 960 960"
+                                    width="1em"
+                                    fill="#e3e3e3"
+                                  >
+                                    <path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z" />
+                                  </svg>
+                                </button>
+                              </>
+                            )}
+                            {!!actions?.length && (
+                              <FaTableActions item={item} actions={actions} />
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>

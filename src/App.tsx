@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import FaTable from "./components/FaTable";
 import type {
   FaTableAction,
+  FaTableChangeOrderEvent,
   FaTableFilter,
   FaTableHeader,
   FaTablePagerParams,
   FaTablePaginatedResponse,
 } from "./types/FaTableTypes";
-import { filterMockData, type User } from "./utils/mock-data";
+import { changeMockOrder, filterMockData, type User } from "./utils/mock-data";
 
 const callbacks = {
   onShowDetails() {
@@ -25,6 +26,11 @@ const callbacks = {
 };
 
 const tableHeaders: Array<FaTableHeader> = [
+  {
+    title: "sort",
+    mask: "#",
+    width: 1,
+  },
   {
     title: "status",
     slot: "status",
@@ -45,6 +51,7 @@ const tableHeaders: Array<FaTableHeader> = [
     title: "username",
     sortable: true,
     hideable: true,
+    max_chars: 10,
   },
   {
     title: "age",
@@ -150,6 +157,8 @@ export default function App() {
   const [tableValues, setTableValues] =
     useState<FaTablePaginatedResponse<User> | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  // Params of the last request, reused to refetch after a row is moved.
+  const lastParams = useRef<FaTablePagerParams | null>(null);
 
   function onCheckChange(primaryKey: number | Array<number>, val: boolean) {
     const ids = Array.isArray(primaryKey) ? primaryKey : [primaryKey];
@@ -166,9 +175,16 @@ export default function App() {
 
   function onChange(params: FaTablePagerParams) {
     console.log(`On change:`, params);
+    lastParams.current = params;
     getData(params).then((data) => {
       setTableValues(data);
     });
+  }
+
+  function onChangeOrder({ row, newSort }: FaTableChangeOrderEvent) {
+    console.log("On change order:", row, newSort);
+    changeMockOrder((row as User).user_id, newSort);
+    if (lastParams.current) onChange(lastParams.current);
   }
 
   function onError(msg: string) {
@@ -219,6 +235,13 @@ export default function App() {
         onChange={onChange}
         onError={onError}
         checkeable
+        canMoveRows
+        clickeableRows
+        onChangeOrder={onChangeOrder}
+        onRowClick={(item, itemIndex, middleClick) =>
+          console.log("Row clicked:", item, itemIndex, middleClick)
+        }
+        truncate={15}
         slots={slots}
       />
     </>

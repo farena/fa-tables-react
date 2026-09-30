@@ -9,6 +9,8 @@ interface Role {
 
 export interface User {
   user_id: number;
+  /** Manual position of the row, changed through `changeMockOrder`. */
+  sort: number;
   status: string;
   name: string;
   username: string;
@@ -98,6 +100,7 @@ function generateUsers(startId: number, count: number): User[] {
 
     return {
       user_id: id,
+      sort: i + 1,
       status: STATUSES[i % 3 === 0 ? 1 : 0],
       name: `${first} ${last}`,
       username: `${slugify(first[0] + last)}${id}`,
@@ -198,6 +201,19 @@ function compareValues(a: unknown, b: unknown): number {
 }
 
 /**
+ * Simulates a backend endpoint that moves a row to `newSort`, swapping it with
+ * the row currently at that position. Out-of-range positions are ignored.
+ */
+export function changeMockOrder(userId: number, newSort: number): void {
+  const row = mockData.find((x) => x.user_id === userId);
+  const target = mockData.find((x) => x.sort === newSort);
+  if (!row || !target) return;
+
+  target.sort = row.sort;
+  row.sort = newSort;
+}
+
+/**
  * Simulates a Laravel-style backend endpoint over `mockData`: applies search,
  * filters and sorting, then paginates the result.
  */
@@ -226,6 +242,9 @@ export function filterMockData(
       );
     });
   }
+
+  // Without an explicit sort, rows keep their manual order.
+  rows.sort((a, b) => a.sort - b.sort);
 
   if (params.sort_by) {
     const sortBy = params.sort_by;

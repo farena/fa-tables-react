@@ -3,6 +3,7 @@
 export { default, default as FaTable } from "./components/FaTable";
 export type {
   FaTableAction,
+  FaTableChangeOrderEvent,
   FaTableFilter,
   FaTableHeader,
   FaTableLang,

@@ -145,12 +145,19 @@ export type FaTableSlotRender = (props: {
   itemIndex: number;
 }) => React.ReactNode;
 
+/** Payload of `onChangeOrder`: the moved row and its requested `sort` value. */
+export interface FaTableChangeOrderEvent {
+  row: unknown;
+  newSort: number;
+}
+
 export interface FaTableProps {
   headers: Array<FaTableHeader>;
   values?: FaTablePagination | null;
   actions?: Array<FaTableAction>;
   filters?: Array<FaTableFilter>;
-  truncate?: [number, boolean];
+  /** Global max length of the cell text (after `max_chars`); `false` disables it. */
+  truncate?: number | false;
   searchMinLen?: number;
   noFilters?: boolean;
   canMoveRows?: boolean;
@@ -165,6 +172,10 @@ export interface FaTableProps {
   slots?: Record<string, FaTableSlotRender>;
   onChange: (params: FaTablePagerParams) => void | null;
   onCheckChange: (primaryKey: number | Array<number>, val: boolean) => void;
+  /** Called when a row is clicked while `clickeableRows` is set. `middleClick` is `true` for a middle-button click. */
+  onRowClick?: (item: unknown, itemIndex: number, middleClick: boolean) => void;
+  /** Called by the up/down buttons shown when `canMoveRows` is set. */
+  onChangeOrder?: (event: FaTableChangeOrderEvent) => void;
   onError?: (msg: string) => void | null;
 }
 

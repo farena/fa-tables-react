@@ -2,8 +2,6 @@
 
 A lightweight React table component for **server-side paginated data**. You fetch the data, FaTables renders it and tells you what to fetch next: search, filters, sorting, page size, hidden columns and page changes are all emitted as a single params object. It also handles value formatting, row selection, per-row action menus and custom cell renderers, with no runtime dependencies besides React.
 
-> FaTables React is a TypeScript port of the FaTables Vue component. A few features of the Vue version are still being ported (see [Roadmap](#roadmap)).
-
 ## Features
 
 - **Server-side everything**: pagination, search, filters, sorting, page size and column visibility are sent to you through one `onChange` callback. Works out of the box with Laravel-style paginator responses.
@@ -164,27 +162,38 @@ Rows are keyed by the numeric field named by `primaryKey` when present, otherwis
 
 ### `<FaTable />` props
 
-| Prop            | Type                                                  | Default    | Description                                                                                                                                |
-| --------------- | ----------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `headers`       | `FaTableHeader[]`                                     | `[]`       | Column definitions.                                                                                                                        |
-| `values`        | `FaTablePagination \| null`                           | empty page | Current page of data. While it is `null` the loader is shown and the pager is hidden.                                                      |
-| `onChange`      | `(params) => void`                                    | —          | **Required.** Called with the full params whenever data must be (re)fetched. See [`onChange` params](#onchange-params).                    |
-| `filters`       | `FaTableFilter[]`                                     | `[]`       | Filters shown in the filters panel.                                                                                                        |
-| `actions`       | `FaTableAction[]`                                     | `[]`       | Entries for the per-row actions menu. No menu column when empty.                                                                           |
-| `slots`         | `Record<string, FaTableSlotRender>`                   | `{}`       | Render functions referenced by `header.slot`, plus the reserved `footer` and `actions` slots.                                              |
-| `searchable`    | `boolean`                                             | `true`     | Shows the search box.                                                                                                                      |
-| `searchMinLen`  | `number`                                              | `3`        | Minimum search length. Shorter (non-empty) searches call `onError(lang.searchTooShort)` instead of `onChange`.                             |
-| `searchHelper`  | `string \| null`                                      | `null`     | Tooltip text shown next to the search box.                                                                                                 |
-| `noFilters`     | `boolean`                                             | `false`    | Hides the whole toolbar: search box, filters button, export button and `actions` slot.                                                     |
-| `initialGetter` | `boolean`                                             | `true`     | Emits `onChange` on mount (with the stored or default filters, if any). See [How data flows](#how-data-flows).                             |
-| `checkeable`    | `boolean`                                             | `false`    | Shows a checkbox column and a select-all checkbox in the header. Requires `primaryKey`.                                                    |
-| `primaryKey`    | `string`                                              | —          | Row field holding a numeric id. Used for selection and as the row key. **Required when `checkeable` is set** (the table throws otherwise). |
-| `checkedIds`    | `Set<number>`                                         | empty set  | Ids of the selected rows. Selection is controlled: update it from `onCheckChange`.                                                         |
-| `onCheckChange` | `(key: number \| number[], checked: boolean) => void` | —          | Called with a single id when a row is toggled, or with all ids of the current page from the select-all checkbox.                           |
-| `onError`       | `(msg: string) => void`                               | —          | Receives user-facing validation errors (currently, a search that is too short).                                                            |
-| `lang`          | `FaTableLang`                                         | English    | UI strings (see [Localization](#localization)).                                                                                            |
+| Prop             | Type                                                  | Default    | Description                                                                                                                                |
+| ---------------- | ----------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `headers`        | `FaTableHeader[]`                                     | `[]`       | Column definitions.                                                                                                                        |
+| `values`         | `FaTablePagination \| null`                           | empty page | Current page of data. While it is `null` the loader is shown and the pager is hidden.                                                      |
+| `onChange`       | `(params) => void`                                    | —          | **Required.** Called with the full params whenever data must be (re)fetched. See [`onChange` params](#onchange-params).                    |
+| `filters`        | `FaTableFilter[]`                                     | `[]`       | Filters shown in the filters panel.                                                                                                        |
+| `actions`        | `FaTableAction[]`                                     | `[]`       | Entries for the per-row actions menu. No menu column when empty.                                                                           |
+| `slots`          | `Record<string, FaTableSlotRender>`                   | `{}`       | Render functions referenced by `header.slot`, plus the reserved `footer` and `actions` slots.                                              |
+| `searchable`     | `boolean`                                             | `true`     | Shows the search box.                                                                                                                      |
+| `searchMinLen`   | `number`                                              | `3`        | Minimum search length. Shorter (non-empty) searches call `onError(lang.searchTooShort)` instead of `onChange`.                             |
+| `searchHelper`   | `string \| null`                                      | `null`     | Tooltip text shown next to the search box.                                                                                                 |
+| `noFilters`      | `boolean`                                             | `false`    | Hides the whole toolbar: search box, filters button, export button and `actions` slot.                                                     |
+| `initialGetter`  | `boolean`                                             | `true`     | Emits `onChange` on mount (with the stored or default filters, if any). See [How data flows](#how-data-flows).                             |
+| `checkeable`     | `boolean`                                             | `false`    | Shows a checkbox column and a select-all checkbox in the header. Requires `primaryKey`.                                                    |
+| `primaryKey`     | `string`                                              | —          | Row field holding a numeric id. Used for selection and as the row key. **Required when `checkeable` is set** (the table throws otherwise). |
+| `checkedIds`     | `Set<number>`                                         | empty set  | Ids of the selected rows. Selection is controlled: update it from `onCheckChange`.                                                         |
+| `onCheckChange`  | `(key: number \| number[], checked: boolean) => void` | —          | Called with a single id when a row is toggled, or with all ids of the current page from the select-all checkbox.                           |
+| `onError`        | `(msg: string) => void`                               | —          | Receives user-facing validation errors (currently, a search that is too short).                                                            |
+| `lang`           | `FaTableLang`                                         | English    | UI strings (see [Localization](#localization)).                                                                                            |
+| `truncate`       | `number \| false`                                     | `false`    | Global max length of the cell text, applied after `max_chars` (skipped for `htmlFormat` columns). The full value stays in the tooltip.     |
+| `clickeableRows` | `boolean`                                             | `false`    | Makes rows clickable (pointer cursor, row highlight on hover) and enables `onRowClick`.                                                    |
+| `onRowClick`     | `(item, itemIndex, middleClick: boolean) => void`     | —          | Called on a row click when `clickeableRows` is set. See [Clickable rows](#clickable-rows).                                                 |
+| `canMoveRows`    | `boolean`                                             | `false`    | Shows up/down buttons in the actions column of each row. Rows must have a numeric `sort` field.                                            |
+| `onChangeOrder`  | `({ row, newSort }) => void`                          | —          | Called by the up/down buttons with `newSort = row.sort - 1` (up) or `row.sort + 1` (down). The parent persists it and refetches.           |
 
-`truncate`, `canMoveRows` and `clickeableRows` are declared in the types but not implemented yet (see [Roadmap](#roadmap)).
+#### Clickable rows
+
+`onRowClick` receives `middleClick: true` for a middle-button click, so you can open the row in a new tab. The click is ignored when:
+
+- the mouse was held down for 150 ms or more (the user is selecting text);
+- it lands on a link, button, input, select, textarea or label inside the row (for example in a slot);
+- it lands on the checkbox or actions column.
 
 ### `FaTableHeader`
 
@@ -363,12 +372,6 @@ Override the CSS custom properties after importing the stylesheet:
 Dark values are applied automatically under `prefers-color-scheme: dark`.
 
 The `searchHelper` icon uses the Font Awesome classes `fa fa-circle-info`, so it is only visible when Font Awesome is loaded in your app.
-
-## Roadmap
-
-These features exist in the Vue version and are being ported. Their props are already declared in `FaTableProps` but have no effect yet:
-
-- Clickable and reorderable rows (`clickeableRows`, `canMoveRows`) and global `truncate`.
 
 ## Development
 

@@ -131,8 +131,8 @@
       opacity: 0.5;
     }
 
-    &.table-hover tr:hover {
-      background-color: rgba(0, 0, 0, 0.025);
+    &.fa-table-hover tbody tr:hover {
+      background-color: var(--fa-tables-bghover);
     }
 
     .hide-btn {
@@ -170,8 +170,13 @@
 
     .fa-table-actions-cell {
       padding: 0 !important;
+      // A cell height lets the wrapper's `height: 100%` resolve to the full
+      // row height, so the buttons stretch to fill the cell.
+      height: 1px;
 
       button {
+        display: flex;
+        align-items: center;
         background: transparent;
         border: none;
         box-shadow: unset;
@@ -181,6 +186,7 @@
 
       > div {
         display: flex;
+        height: 100%;
       }
     }
 
@@ -237,6 +243,7 @@
         right: 0;
         padding: 0 !important;
         bottom: 0;
+        height: auto;
 
         > div {
           flex-direction: column;
@@ -761,6 +768,7 @@ table.table {
         right: 0;
         padding: 0 !important;
         bottom: 0;
+        height: auto;
 
         > div {
           display: flex;
