@@ -22,7 +22,7 @@ A lightweight React table component for **server-side paginated data**. You fetc
 ## Installation
 
 ```bash
-npm install fa-tables-react
+npm install @farena/fa-tables-react
 ```
 
 **Peer dependencies:** `react` and `react-dom` 18 or later.
@@ -38,8 +38,8 @@ import FaTable, {
   type FaTableHeader,
   type FaTablePagerParams,
   type FaTablePagination,
-} from "fa-tables-react";
-import "fa-tables-react/style.css";
+} from "@farena/fa-tables-react";
+import "@farena/fa-tables-react/style.css";
 
 const headers: FaTableHeader[] = [
   { title: "name", sortable: true },

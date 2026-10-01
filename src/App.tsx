@@ -226,9 +226,9 @@ export default function App() {
           </p>
         </div>
         <div className="pg-links">
-          <code>npm install fa-tables-react</code>
+          <code>npm install @farena/fa-tables-react</code>
           <a href="https://github.com/farena/fa-tables-react">GitHub</a>
-          <a href="https://www.npmjs.com/package/fa-tables-react">npm</a>
+          <a href="https://www.npmjs.com/package/@farena/fa-tables-react">npm</a>
         </div>
       </header>
 
