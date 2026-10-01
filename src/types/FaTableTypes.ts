@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 export interface FaTableLang {
   noDataToShow: string;
@@ -68,7 +68,9 @@ export type FaTableFilterType =
   | "date"
   | "date-range"
   | "number"
-  | "boolean";
+  | "boolean"
+  // Any other string is a custom type resolved through `filterComponents`
+  | (string & {});
 
 export type FaTableFilterSectionValueType =
   | undefined
@@ -88,17 +90,43 @@ export interface FaTableFilterSectionLang {
   no: string;
 }
 
-export interface FaTableFilterSectionProps {
+/** Props received by every filter section component, built-in or custom. */
+export interface FaTableFilterComponentProps<
+  V = FaTableFilterSectionValueType,
+> {
   label: string;
-  value: FaTableFilterSectionValueType;
-  sectionType: FaTableFilterType;
+  /** Current (not yet applied) value; it's applied when the user clicks "Apply filters". */
+  value: V;
   column: string;
   options?: Array<string | FaTableFilterOptionObjValue>;
-  moduleName?: string;
   allOption?: string | boolean;
   /** Labels used by the boolean section options. */
   lang?: FaTableFilterSectionLang;
-  onChange: (val: FaTableFilterSectionValueType) => void;
+  /** Full filter config, so custom components can read `props` or any other field. Undefined for the built-in modal sections (show items, sort by, hidden columns). */
+  filter?: FaTableFilter;
+  /** The value must be JSON-serializable: it's persisted in localStorage and cloned before being emitted. */
+  onChange: (val: V) => void;
+}
+
+/** Component used to render a filter section. */
+export type FaTableFilterComponent = ComponentType<FaTableFilterComponentProps>;
+
+/** Filter section components by filter type: overrides built-in types or registers new ones. */
+export type FaTableFilterComponents = Partial<
+  Record<FaTableFilterType, FaTableFilterComponent>
+>;
+
+export interface FaTableFilterSectionProps extends Omit<
+  FaTableFilterComponentProps,
+  "filter"
+> {
+  sectionType: FaTableFilterType;
+  moduleName?: string;
+  filter?: FaTableFilter;
+  /** Component that renders this section, taking precedence over `components`. */
+  component?: FaTableFilterComponent;
+  /** Registry of components by type, taking precedence over the built-in sections. */
+  components?: FaTableFilterComponents;
 }
 
 export interface FaTableFilter {
@@ -110,6 +138,12 @@ export interface FaTableFilter {
   default_value?: unknown;
   /** Key used to extract the value when the filter's result is an object or array of objects. */
   primary_key?: string | null;
+  /** Component that renders this filter, taking precedence over `filterComponents` and the built-in sections. */
+  component?: FaTableFilterComponent;
+  /** Free-form config passed to the filter component through `filter.props`. */
+  props?: Record<string, unknown>;
+  /** Tells whether the value counts as an active filter (badge and "Clear filters" button). */
+  isActive?: (value: unknown) => boolean;
 }
 
 export interface FaTablePagerOpts {
@@ -158,6 +192,13 @@ export interface FaTableProps {
   values?: FaTablePagination | null;
   actions?: Array<FaTableAction>;
   filters?: Array<FaTableFilter>;
+  /**
+   * Filter section components by filter type. Overrides the built-in sections
+   * (also the "Show items", "Sort by" and "Hidden columns" ones, which use
+   * `select` and `select-multiple`) or registers custom types. A filter's own
+   * `component` takes precedence.
+   */
+  filterComponents?: FaTableFilterComponents;
   /** Global max length of the cell text (after `max_chars`); `false` disables it. */
   truncate?: number | false;
   searchMinLen?: number;

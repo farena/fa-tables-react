@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { renderOptions } from "./renderOptions.tsx";
-import type { FilterSectionTypeProps } from "./types.ts";
+import type { FaTableFilterComponentProps } from "../../types/FaTableTypes";
 
 export default function SelectSection({
   label,
@@ -8,7 +8,7 @@ export default function SelectSection({
   options,
   allOption,
   onChange,
-}: FilterSectionTypeProps) {
+}: FaTableFilterComponentProps) {
   const itemId = useId();
   const selectValue =
     typeof value === "string" || typeof value === "number" ? value : "";

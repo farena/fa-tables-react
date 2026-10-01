@@ -115,7 +115,6 @@ function generateUsers(startId: number, count: number): User[] {
 
 const mockData: User[] = generateUsers(4, 120);
 
-
 /** Columns inspected by the free-text search. */
 const SEARCHABLE_COLUMNS = ["name", "username", "status", "role.name"];
 
@@ -149,7 +148,10 @@ function isEmptyFilter(value: unknown): boolean {
     value === null ||
     value === "" ||
     value === "all" ||
-    (Array.isArray(value) && value.length === 0)
+    (Array.isArray(value) && value.length === 0) ||
+    (typeof value === "object" &&
+      !Array.isArray(value) &&
+      Object.values(value).every((x) => x == null || x === ""))
   );
 }
 
@@ -161,6 +163,20 @@ function matchesFilter(fieldValue: unknown, filterValue: unknown): boolean {
   // select-multiple
   if (Array.isArray(filterValue)) {
     return filterValue.map(String).includes(String(fieldValue));
+  }
+
+  // number-range (custom demo filter): { min, max }
+  if (
+    typeof filterValue === "object" &&
+    filterValue !== null &&
+    ("min" in filterValue || "max" in filterValue)
+  ) {
+    const { min, max } = filterValue as {
+      min?: number | null;
+      max?: number | null;
+    };
+    const n = Number(fieldValue);
+    return (min == null || n >= min) && (max == null || n <= max);
   }
 
   // date-range: { start, end } as YYYY-MM-DD strings

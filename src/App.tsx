@@ -8,7 +8,12 @@ import type {
   FaTableSlotRender,
 } from "./types/FaTableTypes";
 import { changeMockOrder, filterMockData, type User } from "./utils/mock-data";
-import { esLang, tableFilters, tableHeaders } from "./playground/config";
+import {
+  esLang,
+  filterComponents,
+  tableFilters,
+  tableHeaders,
+} from "./playground/config";
 
 interface Settings {
   checkeable: boolean;
@@ -71,6 +76,7 @@ function buildSnippet(s: Settings): string {
     "headers={headers}",
     s.actions && "actions={actions}",
     s.filters && "filters={filters}",
+    s.filters && "filterComponents={filterComponents}",
     "values={values}",
     s.checkeable && "checkeable",
     s.checkeable && 'primaryKey="user_id"',
@@ -228,7 +234,9 @@ export default function App() {
         <div className="pg-links">
           <code>npm install @farena/fa-tables-react</code>
           <a href="https://github.com/farena/fa-tables-react">GitHub</a>
-          <a href="https://www.npmjs.com/package/@farena/fa-tables-react">npm</a>
+          <a href="https://www.npmjs.com/package/@farena/fa-tables-react">
+            npm
+          </a>
         </div>
       </header>
 
@@ -322,6 +330,7 @@ export default function App() {
               headers={headers}
               actions={settings.actions ? actions : []}
               filters={settings.filters ? tableFilters : []}
+              filterComponents={filterComponents}
               values={tableValues}
               checkeable={settings.checkeable}
               primaryKey="user_id"

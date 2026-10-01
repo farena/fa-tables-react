@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { renderOptions } from "./renderOptions.tsx";
-import type { FilterSectionTypeProps } from "./types.ts";
+import type { FaTableFilterComponentProps } from "../../types/FaTableTypes";
 
 export default function BooleanSection({
   label,
@@ -8,7 +8,7 @@ export default function BooleanSection({
   allOption,
   lang = { yes: "Yes", no: "No" },
   onChange,
-}: FilterSectionTypeProps) {
+}: FaTableFilterComponentProps) {
   const itemId = useId();
 
   return (

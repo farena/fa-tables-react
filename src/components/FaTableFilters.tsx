@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type {
   FaTableFilter,
+  FaTableFilterComponents,
   FaTableFilterOptionObjValue,
   FaTableFilterType,
   FaTableHeader,
@@ -34,7 +35,7 @@ const showOptions = ["10", "25", "50", "100", "200", "500", "1000"];
  * Returns a fresh map of default values per filter type, so object and
  * array defaults are never shared between filters or calls.
  */
-function getTypesDefaultValues(): Record<FaTableFilterType, unknown> {
+function getTypesDefaultValues(): Partial<Record<FaTableFilterType, unknown>> {
   return {
     number: null,
     select: null,
@@ -55,6 +56,7 @@ interface FaTableFiltersProps {
   initialGetter: boolean;
   searchHelper?: string | null;
   lang?: FaTableFiltersLang;
+  filterComponents?: FaTableFilterComponents;
   slots?: Record<string, FaTableSlotRender>;
   onSearch?: (value: string) => void;
   onFilter: (filters: Record<string, unknown>) => void;
@@ -74,6 +76,7 @@ export default function FaTableFilters({
   initialGetter = true,
   searchHelper = null,
   lang = defaultLang,
+  filterComponents,
   slots,
   onSearch,
   onFilter,
@@ -112,11 +115,24 @@ export default function FaTableFilters({
     ].sort((a, b) => (a.label < b.label ? -1 : 1)),
   ];
 
+  const filtersByColumn = filters.reduce<Record<string, FaTableFilter>>(
+    (acc, f) => {
+      acc[f.column] = f;
+      return acc;
+    },
+    {},
+  );
+
   const activeFilters = Object.keys(result).reduce((sum, key) => {
     const value = result[key];
     const defaultKeys = ["showing", "sort", "hidden"];
 
-    if (defaultKeys.includes(key) || !value) return sum;
+    if (defaultKeys.includes(key)) return sum;
+
+    const isActive = filtersByColumn[key]?.isActive;
+    if (isActive) return isActive(value) ? sum + 1 : sum;
+
+    if (!value) return sum;
 
     const isDateRange =
       typeof value === "object" &&
@@ -131,18 +147,10 @@ export default function FaTableFilters({
     return sum + 1;
   }, 0);
 
-  const filtersByColumn = filters.reduce<Record<string, FaTableFilter>>(
-    (acc, f) => {
-      acc[f.column] = f;
-      return acc;
-    },
-    {},
-  );
-
   function getDefaultFilters(): Record<string, unknown> {
     const typesDefaultValues = getTypesDefaultValues();
     return filters.reduce<Record<string, unknown>>((acc, f) => {
-      acc[f.column] = f.default_value ?? typesDefaultValues[f.type];
+      acc[f.column] = f.default_value ?? typesDefaultValues[f.type] ?? null;
       return acc;
     }, {});
   }
@@ -297,6 +305,7 @@ export default function FaTableFilters({
             sortOpts={sortOptions as FaTableFilterOptionObjValue[]}
             lang={lang.filtersModal}
             value={result}
+            filterComponents={filterComponents}
             onClose={() => setShowFilters(false)}
             onClearAll={() => clearFilters()}
             onFilter={(val) => {

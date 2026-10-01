@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { renderOptions } from "./renderOptions.tsx";
-import type { FilterSectionTypeProps } from "./types.ts";
+import type { FaTableFilterComponentProps } from "../../types/FaTableTypes";
 
 export default function SelectMultipleSection({
   label,
@@ -8,7 +8,7 @@ export default function SelectMultipleSection({
   options,
   allOption,
   onChange,
-}: FilterSectionTypeProps) {
+}: FaTableFilterComponentProps) {
   const itemId = useId();
   const selectValue = Array.isArray(value) ? value.map(String) : [];
 

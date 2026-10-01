@@ -1,8 +1,10 @@
 import type {
   FaTableFilter,
+  FaTableFilterComponents,
   FaTableHeader,
   FaTableLang,
 } from "../types/FaTableTypes";
+import { ChipsFilter, NumberRangeFilter } from "./filters.tsx";
 
 export const tableHeaders: Array<FaTableHeader> = [
   { title: "sort", mask: "#", width: 1 },
@@ -55,6 +57,26 @@ export const tableFilters: Array<FaTableFilter> = [
   { title: "Birth date", type: "date", column: "birth_date" },
   { title: "Created between", type: "date-range", column: "created_at" },
   { title: "Age", type: "number", column: "age" },
+  // Custom type, rendered by the component registered in `filterComponents`
+  {
+    title: "ID",
+    type: "number-range",
+    column: "user_id",
+    default_value: { min: null, max: null },
+    props: { step: 1 },
+    isActive: (value) => {
+      const { min, max } = (value ?? {}) as { min?: unknown; max?: unknown };
+      return min != null || max != null;
+    },
+  },
+  // Built-in type with its own component, which takes precedence over the registry
+  {
+    title: "Role (chips)",
+    type: "select-multiple",
+    column: "role.name",
+    options: roleOptions,
+    component: ChipsFilter,
+  },
   {
     title: "Validated",
     type: "boolean",
@@ -63,6 +85,11 @@ export const tableFilters: Array<FaTableFilter> = [
     default_value: "all",
   },
 ];
+
+/** Registry passed to `filterComponents`: adds the custom `number-range` type. */
+export const filterComponents: FaTableFilterComponents = {
+  "number-range": NumberRangeFilter,
+};
 
 /** Spanish UI strings, to show how `lang` localizes the table. */
 export const esLang: FaTableLang = {

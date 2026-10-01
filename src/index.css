@@ -294,3 +294,44 @@ h2 {
     position: static;
   }
 }
+
+/* Custom filter components of the demo (src/playground/filters.tsx) */
+.pg-filter-range > div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.pg-filter-range input {
+  flex: 1;
+  min-width: 0;
+}
+
+.pg-filter-chips > span {
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.pg-filter-chips > div {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.4em;
+}
+
+.pg-chip {
+  padding: 0.25em 0.75em;
+  border: 1px solid var(--fa-tables-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--fa-tables-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85em;
+}
+
+.pg-chip--active {
+  border-color: var(--fa-tables-accent);
+  background: var(--fa-tables-accent);
+  color: #fff;
+}

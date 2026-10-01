@@ -1,6 +1,8 @@
 import { useId, useRef, useState, type ChangeEvent } from "react";
-import type { FaTableFilterSectionValueType } from "../../types/FaTableTypes";
-import type { FilterSectionTypeProps } from "./types.ts";
+import type {
+  FaTableFilterComponentProps,
+  FaTableFilterSectionValueType,
+} from "../../types/FaTableTypes";
 
 /** Reads the start/end date of a date-range value as an input-friendly string. */
 function dateRangePart(
@@ -16,7 +18,7 @@ export default function DateRangeSection({
   label,
   value,
   onChange,
-}: FilterSectionTypeProps) {
+}: FaTableFilterComponentProps) {
   const itemId = useId();
   const endInputRef = useRef<HTMLInputElement>(null);
   // Date-range edits are kept locally until both ends are chosen, and re-synced

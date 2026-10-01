@@ -1,4 +1,7 @@
-import type { FaTableFilterSectionProps } from "../types/FaTableTypes";
+import type {
+  FaTableFilterComponents,
+  FaTableFilterSectionProps,
+} from "../types/FaTableTypes";
 import BooleanSection from "./FilterSectionTypes/BooleanSection.tsx";
 import ComboboxSection from "./FilterSectionTypes/ComboboxSection.tsx";
 import DateRangeSection from "./FilterSectionTypes/DateRangeSection.tsx";
@@ -7,35 +10,50 @@ import NumberSection from "./FilterSectionTypes/NumberSection.tsx";
 import SelectMultipleSection from "./FilterSectionTypes/SelectMultipleSection.tsx";
 import SelectSection from "./FilterSectionTypes/SelectSection.tsx";
 
+const builtInSections: FaTableFilterComponents = {
+  "select-multiple": SelectMultipleSection,
+  select: SelectSection,
+  boolean: BooleanSection,
+  number: NumberSection,
+  date: DateSection,
+  "date-range": DateRangeSection,
+  combobox: ComboboxSection,
+};
+
 export default function FaTableFiltersSection({
   label,
   value,
   sectionType = "select",
+  column,
   options,
   allOption,
   lang,
+  filter,
+  component,
+  components,
   onChange,
 }: FaTableFilterSectionProps) {
-  const props = { label, value, options, allOption, lang, onChange };
+  // Precedence: the filter's own component, then the registry, then the built-in section
+  const Section =
+    component ?? components?.[sectionType] ?? builtInSections[sectionType];
 
-  function renderByType() {
-    switch (sectionType) {
-      case "select-multiple":
-        return <SelectMultipleSection {...props} />;
-      case "select":
-        return <SelectSection {...props} />;
-      case "boolean":
-        return <BooleanSection {...props} />;
-      case "number":
-        return <NumberSection {...props} />;
-      case "date":
-        return <DateSection {...props} />;
-      case "date-range":
-        return <DateRangeSection {...props} />;
-      case "combobox":
-        return <ComboboxSection {...props} />;
-    }
+  if (!Section) {
+    console.warn(`FaTable: no filter component for type "${sectionType}"`);
+    return null;
   }
 
-  return <div className="fa-table-filter-section">{renderByType()}</div>;
+  return (
+    <div className="fa-table-filter-section">
+      <Section
+        label={label}
+        value={value}
+        column={column}
+        options={options}
+        allOption={allOption}
+        lang={lang}
+        filter={filter}
+        onChange={onChange}
+      />
+    </div>
+  );
 }

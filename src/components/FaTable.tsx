@@ -57,6 +57,7 @@ export default function FaTable({
   headers = [],
   actions = [],
   filters = [],
+  filterComponents,
   values = {
     total: 0,
     per_page: 0,
@@ -354,6 +355,7 @@ export default function FaTable({
           <FaTableFilters
             searchable={searchable}
             filters={filters}
+            filterComponents={filterComponents}
             headers={headers}
             searchHelper={searchHelper}
             initialGetter={initialGetter}

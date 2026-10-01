@@ -1,11 +1,11 @@
 import { useId } from "react";
-import type { FilterSectionTypeProps } from "./types.ts";
+import type { FaTableFilterComponentProps } from "../../types/FaTableTypes";
 
 export default function DateSection({
   label,
   value,
   onChange,
-}: FilterSectionTypeProps) {
+}: FaTableFilterComponentProps) {
   const itemId = useId();
 
   return (

@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import FaTableFiltersSection from "./FaTableFiltersSection";
 import type {
   FaTableFilter,
+  FaTableFilterComponents,
   FaTableFilterOptionObjValue,
   FaTableFilterSectionValueType,
 } from "../types/FaTableTypes";
@@ -35,6 +36,7 @@ interface FaTableFiltersModalProps {
   sortOpts: Array<FaTableFilterOptionObjValue>;
   lang: FaTableFiltersModalLang;
   value: Record<string, unknown>;
+  filterComponents?: FaTableFilterComponents;
   /** Called once the exit animation has finished, so the parent can unmount the modal. */
   onClose: () => void;
   /** Resets the filters to their defaults and applies them; the modal closes afterwards. */
@@ -49,6 +51,7 @@ export default function FaTableFiltersModal({
   filters = [],
   lang = defaultLang,
   value,
+  filterComponents,
   onClose,
   onClearAll,
   onFilter,
@@ -138,6 +141,7 @@ export default function FaTableFiltersModal({
                 options={showOpts}
                 sectionType="select"
                 column="showing"
+                components={filterComponents}
                 onChange={(val) => updateResult({ showing: val })}
                 value={String(result.showing)}
               />
@@ -148,6 +152,7 @@ export default function FaTableFiltersModal({
                 options={sortOpts}
                 sectionType="select"
                 column="sort"
+                components={filterComponents}
                 onChange={(sort) => updateResult({ sort })}
                 value={result.sort as FaTableFilterSectionValueType}
               />
@@ -158,6 +163,7 @@ export default function FaTableFiltersModal({
                 options={hideOpts}
                 sectionType="select-multiple"
                 column="hidden"
+                components={filterComponents}
                 onChange={(hidden) => updateResult({ hidden })}
                 value={result.hidden as FaTableFilterSectionValueType}
               />
@@ -173,6 +179,9 @@ export default function FaTableFiltersModal({
                 }
                 column={f.column}
                 sectionType={f.type}
+                filter={f}
+                component={f.component}
+                components={filterComponents}
                 allOption={
                   f.all_option === true
                     ? lang.allOption
