@@ -30,13 +30,24 @@
   }
 }
 
-.fa-table {
+// The root shares its class with Font Awesome's "table" icon (.fa-table), so its own rules only
+// match the real root (the one with a .fa-table-body child) and leave the icons untouched.
+// :where() keeps the specificity of a plain .fa-table, so consumers can still override it.
+.fa-table:where(:has(> .fa-table-body)) {
   display: grid;
   gap: 1em;
   overflow: hidden;
   background: var(--fa-tables-bg);
   color: var(--fa-tables-text);
+}
 
+// Font Awesome draws the icon glyph on .fa-table::before, which would show up as an extra grid
+// item. Kept out of :where() so it outranks Font Awesome's rule regardless of stylesheet order.
+.fa-table:has(> .fa-table-body)::before {
+  content: none;
+}
+
+.fa-table {
   .fa-table-container {
     overflow-x: auto;
     overflow-y: hidden;
