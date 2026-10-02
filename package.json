@@ -1,6 +1,6 @@
 {
   "name": "@farena/fa-tables-react",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "React table component with server-side pagination, configurable columns, row actions and render slots.",
   "keywords": [
     "react",
