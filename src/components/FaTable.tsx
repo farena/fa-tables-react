@@ -465,7 +465,7 @@ export default function FaTable({
                                     height="1em"
                                     viewBox="0 -960 960 960"
                                     width="1em"
-                                    fill="#e3e3e3"
+                                    fill="currentColor"
                                   >
                                     <path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z" />
                                   </svg>
@@ -479,7 +479,7 @@ export default function FaTable({
                                     height="1em"
                                     viewBox="0 -960 960 960"
                                     width="1em"
-                                    fill="#e3e3e3"
+                                    fill="currentColor"
                                   >
                                     <path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z" />
                                   </svg>
